@@ -27,16 +27,17 @@ from plasma.lib.fileformat.binary import T_BIN_RAW
 from plasma.lib.consts import *
 
 
-class OutputAbs():
+class OutputAbs:
     def __init__(self, ctx=None):
-        self.token_lines = [] # each line is separated in tokens (string, color, is_bold)
-        self.lines = [] # each line contains the entire string
-        self.line_addr = {} # line -> address
-        self.addr_line = {} # address -> line
-        self.idx_tok_inline_comm = {} # line -> (char_index, token_index)
+        # each line is separated in tokens (string, color, is_bold)
+        self.token_lines = []
+        self.lines = []  # each line contains the entire string
+        self.line_addr = {}  # line -> address
+        self.addr_line = {}  # address -> line
+        self.idx_tok_inline_comm = {}  # line -> (char_index, token_index)
         self.curr_index = 0
 
-        self.curr_section = None # must be updated at hand !!
+        self.curr_section = None  # must be updated at hand !!
         self.print_labels = True
 
         # Easy accesses
@@ -52,7 +53,6 @@ class OutputAbs():
         # a call exit / ret (or equivalent).
         self.last_inst_exit_or_ret = False
 
-
     # All functions which start with a '_' add a new token/string on
     # the current line.
 
@@ -61,9 +61,8 @@ class OutputAbs():
             return i.mnemonic
         return "%s %s" % (i.mnemonic, i.op_str)
 
-
     def inline_comm_starts_here(self):
-        line = len(self.token_lines)-1
+        line = len(self.token_lines) - 1
         self.idx_tok_inline_comm[line] = self.curr_index
 
     def last_2_lines_are_empty(self):
@@ -88,7 +87,7 @@ class OutputAbs():
     def _tabs(self, tab):
         # debug
         # if not self.token_lines[-1]:
-            # self.token_lines[-1].append(("       ", 0, False))
+        # self.token_lines[-1].append(("       ", 0, False))
         t = tab * "    "
         self.token_lines[-1].append((t, 0, False))
         self.lines[-1].append(t)
@@ -107,6 +106,7 @@ class OutputAbs():
     def _address(self, addr, print_colon=True, normal_color=False, notprefix=False):
         if self.gctx.debugsp:
             from plasma.lib.analyzer import ALL_SP
+
             if addr in ALL_SP:
                 self._variable(str(ALL_SP[addr]) + " ")
                 self._pad_width(5)
@@ -153,12 +153,16 @@ class OutputAbs():
         self.curr_index += len(string)
 
     def _internal_comment(self, string):
-        self.token_lines[-1].append((string, COLOR_INTERN_COMMENT.val, COLOR_INTERN_COMMENT.bold))
+        self.token_lines[-1].append(
+            (string, COLOR_INTERN_COMMENT.val, COLOR_INTERN_COMMENT.bold)
+        )
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
     def _user_comment(self, string):
-        self.token_lines[-1].append((string, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold))
+        self.token_lines[-1].append(
+            (string, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold)
+        )
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
@@ -187,7 +191,6 @@ class OutputAbs():
         elif size == 8:
             self._data(".dq")
 
-
     def _word(self, by, size, is_from_array=False):
         if not is_from_array:
             self._data_prefix(size)
@@ -208,7 +211,6 @@ class OutputAbs():
             else:
                 self._add(" " + hex(by))
 
-
     def _flags(self, ad):
         if ad not in self._dis.functions:
             return
@@ -223,7 +225,6 @@ class OutputAbs():
         elif flags & FUNC_FLAG_STDCALL:
             self._comment(" __stdcall__")
 
-
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
         # Check if ad is inside an array, in this case we should print
         # something like "((byte*) &label[idx]) + offset)".
@@ -237,7 +238,7 @@ class OutputAbs():
                 array_idx = -1
         elif ty == MEM_ARRAY:
             entry_type = self._dis.mem.get_array_entry_type(tmp_ad)
-            entry_size =  self._dis.mem.get_size_from_type(entry_type)
+            entry_size = self._dis.mem.get_size_from_type(entry_type)
             n = ad - tmp_ad
             array_idx = int(n / entry_size)
             array_offset = n % entry_size
@@ -309,13 +310,11 @@ class OutputAbs():
 
         return True
 
-
     def _label_or_address(self, addr, tab=-1, print_colon=True):
         if self._label(addr, tab, print_colon):
             return
         self._tabs(tab)
         self._address(addr, print_colon)
-
 
     def _label_and_address(self, ad, tab=-1, print_colon=True, with_comment=False):
         is_first = not self.ctx.is_dump and ad == self.ctx.entry
@@ -324,8 +323,7 @@ class OutputAbs():
             self._new_line()
 
             if self._dis.mem.is_func(ad):
-                if self._dis.functions[ad][FUNC_FLAGS] & \
-                        FUNC_FLAG_ERR_STACK_ANALYSIS:
+                if self._dis.functions[ad][FUNC_FLAGS] & FUNC_FLAG_ERR_STACK_ANALYSIS:
                     self._error("stack analysis error")
                     self._new_line()
 
@@ -351,7 +349,6 @@ class OutputAbs():
                 self._comment("# ")
             self._address(ad, print_colon)
 
-
     def _previous_comment(self, i, tab):
         if i.address in self._dis.internal_previous_comments:
             if not self.last_2_lines_are_empty():
@@ -369,7 +366,6 @@ class OutputAbs():
                 self._user_comment("; %s" % comm)
                 self._new_line()
 
-
     def _commented_inst(self, i, tab):
         self._label_and_address(i.address, tab, with_comment=True)
         self.set_line(i.address)
@@ -379,7 +375,6 @@ class OutputAbs():
         if i.address in self.gctx.db.inverted_cond:
             self._internal_comment(" ; manually inverted")
         self._new_line()
-
 
     def _inline_comment(self, i):
         # A user comment should always be at the end of the line
@@ -393,13 +388,12 @@ class OutputAbs():
             self.inline_comm_starts_here()
             self._user_comment(self._dis.user_inline_comments[i.address])
 
-
     # Only used when --nocomment is enabled and a jump point to this instruction
+
     def _address_if_needed(self, i, tab):
         if i.address in self.ctx.addr_color:
             self._tabs(tab)
             self._address(i.address)
-
 
     def _bytes(self, by):
         if self.gctx.print_bytes:
@@ -421,7 +415,6 @@ class OutputAbs():
             else:
                 self._comment("   ")
 
-
     def _comment_fused(self, jump_inst, fused_inst, tab):
         if self.gctx.comments:
             if fused_inst != None:
@@ -434,7 +427,6 @@ class OutputAbs():
                 self._address_if_needed(fused_inst, tab)
             if jump_inst != None:
                 self._address_if_needed(jump_inst, tab)
-
 
     def _all_vars(self, func_addr):
         if not self._dis.mem.is_func(func_addr):
@@ -461,11 +453,9 @@ class OutputAbs():
 
         self._new_line()
 
-
     def _asm_block(self, blk, tab):
         for i in blk:
             self._asm_inst(i, tab)
-
 
     def _bad(self, addr, tab=0):
         self._tabs(tab)
@@ -473,11 +463,11 @@ class OutputAbs():
         self._add("(bad)")
         self._new_line()
 
-
     def _dash(self):
-        self._user_comment("; ---------------------------------------------------------------------")
+        self._user_comment(
+            "; ---------------------------------------------------------------------"
+        )
         self._new_line()
-
 
     def deref_if_offset(self, ad):
         section = self._binary.get_section(ad)
@@ -488,11 +478,9 @@ class OutputAbs():
                 val = section.read_int(ad, sz)
                 if self.gctx.capstone_string == 0:
                     self._add("=")
-                    self._imm(val, 0, True, section=section,
-                              force_dont_print_data=True)
+                    self._imm(val, 0, True, section=section, force_dont_print_data=True)
                     return True
         return False
-
 
     #
     # Print an immediate value
@@ -506,9 +494,17 @@ class OutputAbs():
     # is_from_jump   used to print an error if the jump address is unknown (not in
     #                        the binary)
     #
-    def _imm(self, imm, op_size, hexa, section=None, print_data=True,
-             force_dont_print_data=False, is_from_jump=False):
 
+    def _imm(
+        self,
+        imm,
+        op_size,
+        hexa,
+        section=None,
+        print_data=True,
+        force_dont_print_data=False,
+        is_from_jump=False,
+    ):
         if self.gctx.capstone_string != 0:
             hexa = True
 
@@ -521,12 +517,14 @@ class OutputAbs():
             ty = self._dis.mem.get_type(imm)
             # ty == -1 : from the terminal (with -x) there are no xrefs if
             # the file was loaded without a database.
-            if ty == MEM_HEAD and self._dis.mem.get_type(
-                    self._dis.mem.get_head_addr(imm)) == MEM_ASCII:
+            if (
+                ty == MEM_HEAD
+                and self._dis.mem.get_type(self._dis.mem.get_head_addr(imm))
+                == MEM_ASCII
+            ):
                 ty = MEM_ASCII
 
-            if imm in self._dis.xrefs and ty != MEM_UNK and \
-                    ty != MEM_ASCII or ty == -1:
+            if imm in self._dis.xrefs and ty != MEM_UNK and ty != MEM_ASCII or ty == -1:
                 return
 
             if ty == MEM_ASCII:
@@ -585,10 +583,9 @@ class OutputAbs():
                 else:
                     return
                 if set(packed).issubset(BYTES_PRINTABLE_SET):
-                    self._string(" \"" + "".join(map(chr, packed)) + "\"")
+                    self._string(' "' + "".join(map(chr, packed)) + '"')
 
         return
-
 
     def set_line(self, addr):
         l = len(self.token_lines) - 1
@@ -596,28 +593,24 @@ class OutputAbs():
         if addr not in self.addr_line or l < self.addr_line[addr]:
             self.addr_line[addr] = l
 
-
     def is_label(self, ad):
-        return ad in self._binary.reverse_symbols or \
-               ad in self._dis.xrefs
-
+        return ad in self._binary.reverse_symbols or ad in self._dis.xrefs
 
     def get_offset_size(self, ad):
         if self._dis.mem.is_offset(ad):
             return self._dis.mem.get_size(ad)
         return -1
 
-
     # Returns (func_addr, off) or None
+
     def get_var_offset(self, i, op_num):
-        func_id  = self._dis.mem.get_func_id(i.address)
+        func_id = self._dis.mem.get_func_id(i.address)
         if func_id != -1 and func_id in self._dis.func_id:
             func_addr = self._dis.func_id[func_id]
             tmp = self._dis.functions[func_addr][FUNC_INST_VARS_OFF]
             if i.address in tmp:
                 return func_addr, tmp[i.address]
         return None
-
 
     def get_var_name(self, func_addr, off):
         name = self._dis.functions[func_addr][FUNC_VARS][off][VAR_NAME]
@@ -626,7 +619,6 @@ class OutputAbs():
                 return "var_%x" % (-off)
             return "arg_%x" % off
         return name
-
 
     def __get_var_type(self, func_addr, off):
         ty = self._dis.functions[func_addr][FUNC_VARS][off][VAR_TYPE]
@@ -641,7 +633,6 @@ class OutputAbs():
         else:
             t = "void *"
         return t
-
 
     def _ast(self, entry, ast):
         self._new_line()
@@ -664,8 +655,7 @@ class OutputAbs():
         self._new_line()
 
         if self._dis.mem.is_func(entry):
-            if self._dis.functions[entry][FUNC_FLAGS] & \
-                    FUNC_FLAG_ERR_STACK_ANALYSIS:
+            if self._dis.functions[entry][FUNC_FLAGS] & FUNC_FLAG_ERR_STACK_ANALYSIS:
                 self._tabs(1)
                 self._error("stack analysis error")
                 self._new_line()
@@ -682,7 +672,6 @@ class OutputAbs():
         self._add("}")
         self.join_lines()
 
-
     def join_lines(self):
         # Join all lines
         for i, l in enumerate(self.lines):
@@ -690,7 +679,6 @@ class OutputAbs():
             sz = len(self.lines[i])
             if i not in self.idx_tok_inline_comm:
                 self.idx_tok_inline_comm[i] = (sz + 1, len(l))
-
 
     def _asm_inst(self, i, tab=0, prefix=""):
         if self.last_inst_exit_or_ret:
@@ -703,7 +691,7 @@ class OutputAbs():
             # debug
             # from lib.utils import BRANCH_NEXT
             # if i.address in self.ctx.gph.link_out:
-                # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
+            # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
             self._commented_inst(i, tab)
             return
 
@@ -722,7 +710,7 @@ class OutputAbs():
         # debug
         # from lib.utils import BRANCH_NEXT
         # if i.address in self.ctx.gph.link_out:
-            # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
+        # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
 
         if self.gctx.capstone_string == 2:
             self._add(i.mnemonic)
@@ -745,21 +733,28 @@ class OutputAbs():
                 if len(i.operands) > 0:
                     self._add(" ")
 
-                    for num in range(len(i.operands)-1):
+                    for num in range(len(i.operands) - 1):
                         self._operand(i, num, hexa=True, force_dont_print_data=True)
                         self._add(", ")
 
                     # WARNING: it assumes that the last operand is the address
                     if i.operands[-1].type != self.OP_IMM:
                         self._operand(i, -1, hexa=True, force_dont_print_data=True)
-                        if self.ARCH_UTILS.is_uncond_jump(i) and \
-                                not self.ctx.is_dump and \
-                                i.address not in self._dis.jmptables:
+                        if (
+                            self.ARCH_UTILS.is_uncond_jump(i)
+                            and not self.ctx.is_dump
+                            and i.address not in self._dis.jmptables
+                        ):
                             self._add(" ")
                             self._comment("# STOPPED")
                     else:
-                        self._operand(i, -1, hexa=True, force_dont_print_data=True,
-                                      is_from_jump=True)
+                        self._operand(
+                            i,
+                            -1,
+                            hexa=True,
+                            force_dont_print_data=True,
+                            is_from_jump=True,
+                        )
 
             else:
                 self._sub_asm_inst(i, tab)
@@ -769,13 +764,13 @@ class OutputAbs():
         self._inline_comment(i)
         self._new_line()
 
-        self.last_inst_exit_or_ret = \
+        self.last_inst_exit_or_ret = (
             not self.ctx.is_dump and i.address in self.ctx.gph.exit_or_ret
-
+        )
 
     def print(self):
         for l in self.token_lines:
-            for (string, col, is_bold) in l:
+            for string, col, is_bold in l:
                 if self.gctx.color:
                     if col != 0:
                         string = color(string, col)
@@ -784,10 +779,8 @@ class OutputAbs():
                 print_no_end(string)
             print()
 
-
     def _pre_asm_inst(self, i, tab):
         return tab
-
 
     def _post_asm_inst(self, i, tab):
         return
@@ -795,11 +788,10 @@ class OutputAbs():
     def _operand(self, i, num_op, hexa=False, show_deref=True):
         raise NotImplementedError
 
-
     def _if_cond(self, jump_id, jump_cond, fused_inst):
         raise NotImplementedError
 
-
     # Architecture specific output
+
     def _sub_asm_inst(self, i, tab=0):
         raise NotImplementedError

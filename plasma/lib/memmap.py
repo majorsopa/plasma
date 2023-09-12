@@ -55,13 +55,11 @@ class MemoryMap(QtGui.QWidget):
         self.setWindowTitle("MEMORY MAP")
         self.show()
 
-
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
         self.draw_memory(event, qp)
         qp.end()
-
 
     def update_sections_coords(self):
         total = 0
@@ -70,13 +68,12 @@ class MemoryMap(QtGui.QWidget):
 
         # width = self.width()
         width = 1000
-        self.section_coords = {} # ad -> [coord_x, size_in_window]
+        self.section_coords = {}  # ad -> [coord_x, size_in_window]
         x = 0
         for s in self.binary.iter_sections():
             sz = int((s.virt_size * width) / total)
             self.section_coords[s.start] = [x, sz]
             x += sz
-
 
     def conv_ad_to_x(self, ad, nbytes):
         s = self.binary.get_section(ad)
@@ -86,7 +83,6 @@ class MemoryMap(QtGui.QWidget):
         if sz == 0:
             sz = 1
         return (x, sz)
-
 
     def draw_memory(self, event, qp):
         # width = self.width()
@@ -108,8 +104,7 @@ class MemoryMap(QtGui.QWidget):
             qp.fillRect(x, 10, sz + 1, 80, col)
 
         for s in self.binary.iter_sections():
-         qp.fillRect(self.section_coords[s.start][0], 0, 1, 100, COLOR_SEP)
-
+            qp.fillRect(self.section_coords[s.start][0], 0, 1, 100, COLOR_SEP)
 
 
 class ThreadMemoryMap(threading.Thread):
@@ -117,7 +112,6 @@ class ThreadMemoryMap(threading.Thread):
         self.db = db
         self.binary = binary
         threading.Thread.__init__(self)
-
 
     def run(self):
         global is_open

@@ -43,8 +43,9 @@ def popup_listbox(title, output, par_widget):
     w = Window()
     w.screen = borders
 
-    w.widgets.append(Listbox(par_widget.x + x + 1, par_widget.y + y + 1,
-                             w2, h2, output))
+    w.widgets.append(
+        Listbox(par_widget.x + x + 1, par_widget.y + y + 1, w2, h2, output)
+    )
     ret = w.start_view(w.screen)
 
     return (ret, w.widgets[0].win_y + w.widgets[0].cursor_y)
@@ -71,13 +72,13 @@ def popup_inputbox(title, text, par_widget):
 
 def inputbox(text, x, y, w, h):
     """
-    It creates a surface for an inline editor.   
+    It creates a surface for an inline editor.
     """
     from plasma.lib.ui.inlineed import InlineEd
+
     ed = InlineEd(0, 0, 0, text, 0, [])
     ed.screen = curses.newwin(h, w, y, x)
     ret = ed.start_view(ed.screen)
     if not ret:
         return ""
     return ed.text
-

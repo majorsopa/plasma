@@ -24,11 +24,11 @@ from plasma.lib.consts import *
 from plasma.lib.ui.widget import VertivalSep
 
 
-MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
+MOUSE_EVENT = [0x1B, 0x5B, 0x4D]
 MOUSE_INTERVAL = 200
 
 
-class Window():
+class Window:
     def __init__(self):
         self.screen = None
         self.widgets = []
@@ -38,8 +38,8 @@ class Window():
         self.cursor_x = 0
         self.cursor_y = 0
 
-
     # Returns True if we should refresh the screen
+
     def do_key(self, k):
         if k == b"|":
             self.split()
@@ -52,14 +52,15 @@ class Window():
             return self.mouse_event(k)
         return False
 
-
     def search_focus(self, x, y):
         for i, w in enumerate(self.widgets):
-            if w.x <= x < w.x + w.width and w.y <= y < w.y + w.height and \
-                      not w.is_passive:
+            if (
+                w.x <= x < w.x + w.width
+                and w.y <= y < w.y + w.height
+                and not w.is_passive
+            ):
                 return i
         return -1
-
 
     def mouse_event(self, k):
         w = self.widgets[self.focus_widget_idx]
@@ -99,13 +100,12 @@ class Window():
         # Simple left click
         if button == 0x20:
             w.callback_mouse_left(x, y)
-        elif button == 0x60: # scroll up
+        elif button == 0x60:  # scroll up
             w.callback_mouse_up()
-        elif button == 0x61: # scroll down
+        elif button == 0x61:  # scroll down
             w.callback_mouse_down()
 
         return True
-
 
     def read_escape_keys(self):
         if self.set_key_timeout:
@@ -116,7 +116,7 @@ class Window():
 
         if k != -1:
             while k:
-                seq.append(k & 0xff)
+                seq.append(k & 0xFF)
                 k >>= 8
 
             self.screen.timeout(0)
@@ -136,7 +136,6 @@ class Window():
         self.set_key_timeout = True
         return bytes(seq)
 
-
     def refresh_all(self):
         for w in self.widgets:
             w.draw()
@@ -145,7 +144,6 @@ class Window():
             if w.has_focus:
                 w.draw_cursor()
             w.screen.refresh()
-
 
     def start_view(self, screen):
         self.screen = screen
@@ -187,16 +185,16 @@ class Window():
             refr = self.do_key(k)
 
             if wdgt.should_stop:
-                wdgt.should_stop = False # because the console saves widgets
+                wdgt.should_stop = False  # because the console saves widgets
                 screen.erase()
                 return wdgt.value_selected
 
         screen.erase()
         return wdgt.value_selected
 
-
     def split(self):
         from plasma.lib.ui.disasmbox import Disasmbox
+
         w = self.widgets[self.focus_widget_idx]
 
         if not isinstance(w, Disasmbox):
@@ -243,14 +241,19 @@ class Window():
 
         # Clone current Disasmbox, the width will be updated after
         until = w.last_addr if w.mode == MODE_DUMP else -1
-        d = Disasmbox(x, 0, w_dbox, height,
-                      w.gctx,
-                      w.first_addr,
-                      w.analyzer,
-                      w.api,
-                      mode=w.mode,
-                      until=until,
-                      update_position=False)
+        d = Disasmbox(
+            x,
+            0,
+            w_dbox,
+            height,
+            w.gctx,
+            w.first_addr,
+            w.analyzer,
+            w.api,
+            mode=w.mode,
+            until=until,
+            update_position=False,
+        )
 
         for v in w.stack:
             d.stack.append(tuple(v))

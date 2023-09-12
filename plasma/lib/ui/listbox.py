@@ -66,12 +66,12 @@ class Listbox(Widget):
             b"\x1b\x5b\x36\x7e": self.k_pagedown,
             b"g": self.k_top,
             b"G": self.k_bottom,
-            b"\x01": self.k_home, # ctrl-a
-            b"\x05": self.k_end, # ctrl-e
+            b"\x01": self.k_home,  # ctrl-a
+            b"\x05": self.k_end,  # ctrl-e
             b"\x1b\x5b\x37\x7e": self.k_home,
             b"\x1b\x5b\x38\x7e": self.k_end,
             b" ": self.cmd_highlight_current_word,
-            b"\x0b": self.cmd_highlight_clear, # ctrl-k
+            b"\x0b": self.cmd_highlight_clear,  # ctrl-k
             b"\x1b\x5b\x31\x3b\x35\x44": self.k_ctrl_left,
             b"\x1b\x5b\x31\x3b\x35\x43": self.k_ctrl_right,
             b"\n": self.k_enter,
@@ -90,7 +90,6 @@ class Listbox(Widget):
             7: "▁",
         }
 
-
     def is_tok_var(self):
         num_line = self.win_y + self.cursor_y
         tokens = self.output.token_lines[num_line]
@@ -100,13 +99,12 @@ class Listbox(Widget):
             return None
 
         i = 0
-        for (s, col, _) in tokens:
+        for s, col, _ in tokens:
             i += len(s)
             if x < i:
                 return col == COLOR_VAR.val
 
         return False
-
 
     def get_word_under_cursor(self):
         num_line = self.win_y + self.cursor_y
@@ -127,8 +125,9 @@ class Listbox(Widget):
             x -= 1
         x += 1
 
-        while x < len(line) and (line[x].isalnum() or \
-                line[x] in self.word_accepted_chars):
+        while x < len(line) and (
+            line[x].isalnum() or line[x] in self.word_accepted_chars
+        ):
             curr.append(line[x])
             x += 1
 
@@ -139,7 +138,6 @@ class Listbox(Widget):
             return "".join(curr)
         return None
 
-
     def goto_line(self, new_line):
         curr_line = self.win_y + self.cursor_y
         diff = new_line - curr_line
@@ -147,7 +145,6 @@ class Listbox(Widget):
             self.scroll_down(diff, False)
         elif diff < 0:
             self.scroll_up(-diff, False)
-
 
     def draw(self):
         i = 0
@@ -166,15 +163,20 @@ class Listbox(Widget):
         i = y % 8
         y = y // 8
 
-        self.screen.insstr(y, self.width - 1,
+        self.screen.insstr(
+            y,
+            self.width - 1,
             self.cursor_position_utf8[i],
-            color_pair(COLOR_SCROLL_CURSOR))
+            color_pair(COLOR_SCROLL_CURSOR),
+        )
 
         if i != 0 and y + 1 < self.height:
-            self.screen.insstr(y + 1, self.width - 1,
+            self.screen.insstr(
+                y + 1,
+                self.width - 1,
                 self.cursor_position_utf8[i],
-                color_pair(COLOR_SCROLL_CURSOR) | A_REVERSE)
-
+                color_pair(COLOR_SCROLL_CURSOR) | A_REVERSE,
+            )
 
     def draw_cursor(self):
         size_line = len(self.output.lines[self.win_y + self.cursor_y])
@@ -187,16 +189,15 @@ class Listbox(Widget):
 
         self.screen.move(self.cursor_y, x)
 
-
     def print_line(self, i):
         num_line = self.win_y + i
         is_current_line = self.cursor_y == i and self.has_focus
         force_exit = False
         x = 0
 
-        for (string, col, is_bold) in self.token_lines[num_line]:
+        for string, col, is_bold in self.token_lines[num_line]:
             if x + len(string) >= self.width - 1:
-                string = string[:self.width - x - 1]
+                string = string[: self.width - x - 1]
                 force_exit = True
 
             c = color_pair(col)
@@ -221,7 +222,6 @@ class Listbox(Widget):
         self.highlight_search(i)
         self.screen.move(i, x)
 
-
     def get_y_scroll(self):
         # Because the scroll can have 8 states
         h8 = self.height * 8
@@ -232,25 +232,20 @@ class Listbox(Widget):
             return h8 - 8
         return y
 
-
     def callback_mouse_left(self, x, y):
         self.cursor_x = x
         self.goto_line(self.win_y + y)
         self.cmd_highlight_current_word(True)
         self.check_cursor_x()
 
-
     def callback_mouse_up(self):
         self.scroll_up(3, True)
-
 
     def callback_mouse_down(self):
         self.scroll_down(3, True)
 
-
     def callback_mouse_double_left(self):
         return False
-
 
     def highlight_search(self, i):
         if not self.search_hi:
@@ -265,7 +260,6 @@ class Listbox(Widget):
                 if check_match_word(self.output.lines[num_line], idx, word):
                     self.screen.chgat(i, idx, len(word), curses.color_pair(1))
                 start = idx + 1
-
 
     def scroll_up(self, n, do_page_scroll):
         if do_page_scroll:
@@ -298,7 +292,6 @@ class Listbox(Widget):
                         self.win_y -= 1
                     else:
                         self.cursor_y -= 1
-
 
     def scroll_down(self, n, do_page_scroll):
         if do_page_scroll:
@@ -337,14 +330,11 @@ class Listbox(Widget):
                     else:
                         self.cursor_y += 1
 
-
     def dump_update_up(self, wy):
         return wy
 
-
     def dump_update_bottom(self, wy):
         return
-
 
     def check_cursor_x(self):
         size_line = len(self.output.lines[self.win_y + self.cursor_y])
@@ -353,9 +343,7 @@ class Listbox(Widget):
         elif self.cursor_x >= size_line:
             self.cursor_x = size_line - 1
 
-
     # Commands / Mapping keys
-
 
     def k_left(self):
         self.check_cursor_x()
@@ -389,12 +377,10 @@ class Listbox(Widget):
         self.value_selected = True
         return False
 
-
     def k_q(self):
         self.should_stop = True
         self.value_selected = False
         return False
-
 
     def k_home(self):
         # TODO: fix self.cursor_x >= w
@@ -456,13 +442,12 @@ class Listbox(Widget):
 
     def k_next_paragraph(self):
         l = self.win_y + self.cursor_y + 1
-        while l < len(self.output.lines)-1 and len(self.output.lines[l]) != 0:
+        while l < len(self.output.lines) - 1 and len(self.output.lines[l]) != 0:
             l += 1
         if l < len(self.output.lines):
             self.goto_line(l)
             self.check_cursor_x()
         return True
-
 
     def k_top(self):
         self.cursor_y = 0
@@ -470,17 +455,14 @@ class Listbox(Widget):
         self.cursor_x = 0
         return True
 
-
     def k_bottom(self):
         self.cursor_x = 0
         if self.win_y >= len(self.token_lines) - self.height:
-            self.cursor_y += len(self.token_lines) - \
-                             self.win_y - self.cursor_y - 1
+            self.cursor_y += len(self.token_lines) - self.win_y - self.cursor_y - 1
         else:
             self.cursor_y = self.height - 1
             self.win_y = len(self.token_lines) - self.height
         return True
-
 
     def cmd_highlight_current_word(self, from_mouse_event=False):
         # When we click on a word with the mouse, we must be explicitly
@@ -496,7 +478,6 @@ class Listbox(Widget):
             return False
         self.search_hi = [w]
         return True
-
 
     def cmd_highlight_clear(self):
         self.search_hi.clear()

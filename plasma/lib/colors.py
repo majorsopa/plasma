@@ -37,7 +37,7 @@ def pick_color(addr):
     ctx.addr_color[addr] = ctx.color_counter
 
 
-def color(text, c): # type c == int
+def color(text, c):  # type c == int
     if not gctx.color:
         return text
     return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"

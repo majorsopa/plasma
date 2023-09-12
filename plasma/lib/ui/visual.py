@@ -60,8 +60,7 @@ class Visual(Window):
                 return
         else:
             for i in range(0, curses.COLORS):
-                curses.init_pair(i, 7, -1) # white
-
+                curses.init_pair(i, 7, -1)  # white
 
         # Init widgets
 
@@ -74,7 +73,9 @@ class Visual(Window):
                 if isinstance(wdgt, Disasmbox):
                     wdgt.reload_asm()
         else:
-            self.widgets = [Disasmbox(0, 0, w, h, gctx, ad, analyzer, api, mode=MODE_DUMP)]
+            self.widgets = [
+                Disasmbox(0, 0, w, h, gctx, ad, analyzer, api, mode=MODE_DUMP)
+            ]
             if self.widgets[0].ctx is None:
                 self.error_occurs = True
                 curses.nocbreak()

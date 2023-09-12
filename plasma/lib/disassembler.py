@@ -21,17 +21,28 @@ import struct
 from time import time
 
 from plasma.lib.graph import Graph
-from plasma.lib.utils import (unsigned, debug__, BYTES_PRINTABLE_SET,
-                              get_char, print_no_end, warning)
+from plasma.lib.utils import (
+    unsigned,
+    debug__,
+    BYTES_PRINTABLE_SET,
+    get_char,
+    print_no_end,
+    warning,
+)
 from plasma.lib.fileformat.binary import Binary, T_BIN_PE, T_BIN_ELF, T_BIN_RAW
-from plasma.lib.colors import (color_addr, color_symbol, color_comment,
-                               color_section, color_string)
+from plasma.lib.colors import (
+    color_addr,
+    color_symbol,
+    color_comment,
+    color_section,
+    color_string,
+)
 from plasma.lib.exceptions import ExcArch, ExcFileFormat
 from plasma.lib.memory import Memory
 from plasma.lib.consts import *
 
 
-class Disassembler():
+class Disassembler:
     def __init__(self, filename, raw_type, raw_base, raw_big_endian, database):
         import capstone as CAPSTONE
 
@@ -59,7 +70,7 @@ class Disassembler():
             "MIPS64": 8,
         }
 
-        self.capstone_inst = {} # capstone instruction cache
+        self.capstone_inst = {}  # capstone instruction cache
         self.db = database
 
         if database.loaded:
@@ -109,7 +120,7 @@ class Disassembler():
             self.binary.symbols = database.symbols
             self.binary.reverse_symbols = database.reverse_symbols
             self.binary.demangled = database.demangled
-            self.binary.reverse_demangled = database.reverse_demangled 
+            self.binary.reverse_demangled = database.reverse_demangled
             self.binary.imports = database.imports
 
         cs_arch = arch_lookup.get(self.binary.arch, None)
@@ -127,10 +138,10 @@ class Disassembler():
         for s in self.binary.iter_sections():
             s.big_endian = cs_mode & CAPSTONE.CS_MODE_BIG_ENDIAN
 
-
     def instanciate_binary(self, filename, raw_type, raw_base, raw_big_endian):
         if raw_type != None:
             import plasma.lib.fileformat.raw as LIB_RAW
+
             self.binary = LIB_RAW.Raw(filename, raw_type, raw_base, raw_big_endian)
             self.type = T_BIN_RAW
             return
@@ -140,9 +151,11 @@ class Disassembler():
 
         if ty == T_BIN_ELF:
             import plasma.lib.fileformat.elf as LIB_ELF
+
             self.binary = LIB_ELF.ELF(self.db, filename)
         elif ty == T_BIN_PE:
             import plasma.lib.fileformat.pe as LIB_PE
+
             self.binary = LIB_PE.PE(self.db, filename)
         else:
             raise ExcFileFormat()
@@ -152,7 +165,6 @@ class Disassembler():
         elapsed = time()
         elapsed = elapsed - start
         debug__("Binary loaded in %fs" % elapsed)
-
 
     def load_symbols(self):
         start = time()
@@ -177,7 +189,6 @@ class Disassembler():
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.binary.symbols), elapsed))
 
-
     def get_magic(self, filename):
         f = open(filename, "rb")
         magic = f.read(8)
@@ -188,9 +199,9 @@ class Disassembler():
             return T_BIN_PE
         return None
 
-
     # `func_ad` is the function address where the variable `name`
     # is supposed to be.
+
     def var_get_offset(self, func_ad, name):
         if func_ad not in self.functions:
             return None
@@ -202,7 +213,6 @@ class Disassembler():
                 return off
         return None
 
-
     def load_arch_module(self):
         if self.binary.arch in ("x86", "x64"):
             import plasma.lib.arch.x86 as ARCH
@@ -213,7 +223,6 @@ class Disassembler():
         else:
             raise NotImplementedError
         return ARCH
-
 
     def dump_xrefs(self, ctx, ad):
         ARCH = self.load_arch_module()
@@ -239,9 +248,9 @@ class Disassembler():
             ty = self.mem.get_type(x)
 
             # A PE import should not be displayed as a subroutine
-            if not(self.binary.type == T_BIN_PE and x in self.binary.imports) \
-                   and (ty == MEM_FUNC or ty == MEM_CODE):
-
+            if not (self.binary.type == T_BIN_PE and x in self.binary.imports) and (
+                ty == MEM_FUNC or ty == MEM_CODE
+            ):
                 func_id = self.mem.get_func_id(x)
                 if func_id != -1:
                     fad = self.func_id[func_id]
@@ -293,10 +302,8 @@ class Disassembler():
 
         return o
 
-
     def is_label(self, ad):
         return ad in self.db.reverse_symbols or ad in self.xrefs
-
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
         ARCH = self.load_arch_module()
@@ -339,15 +346,15 @@ class Disassembler():
                 o._new_line()
                 o._new_line()
 
-            while ((l < lines and until == -1) or (ad < until and until != -1)) \
-                    and ad <= s.end:
-
+            while (
+                (l < lines and until == -1) or (ad < until and until != -1)
+            ) and ad <= s.end:
                 ty = self.mem.get_type(ad)
 
                 # A PE import should not be displayed as a subroutine
-                if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
-                        and self.mem.is_code(ad):
-
+                if not (
+                    self.binary.type == T_BIN_PE and ad in self.binary.imports
+                ) and self.mem.is_code(ad):
                     is_func = ad in self.functions
 
                     if is_func:
@@ -360,8 +367,11 @@ class Disassembler():
 
                     i = self.lazy_disasm(ad, s.start)
 
-                    if not is_func and ad in self.xrefs and \
-                            not o.last_2_lines_are_empty():
+                    if (
+                        not is_func
+                        and ad in self.xrefs
+                        and not o.last_2_lines_are_empty()
+                    ):
                         o._new_line()
 
                     o._asm_inst(i)
@@ -445,7 +455,7 @@ class Disassembler():
                                     o.set_line(ad + j)
                                     o._address(ad + j)
 
-                                blk = st[ibs:ibs + bs]
+                                blk = st[ibs : ibs + bs]
 
                                 if i < len(splitted) - 1 and ibs + bs >= len(st):
                                     o._string('"' + blk + '\\n"')
@@ -486,8 +496,13 @@ class Disassembler():
                         val = s.read_int(ad, entry_size)
                         if MEM_WOFFSET <= entry_type <= MEM_QOFFSET:
                             o._add(" ")
-                            o._imm(val, entry_size, True,
-                                   print_data=False, force_dont_print_data=True)
+                            o._imm(
+                                val,
+                                entry_size,
+                                True,
+                                print_data=False,
+                                force_dont_print_data=True,
+                            )
                         else:
                             o._word(val, entry_size, is_from_array=True)
 
@@ -530,8 +545,12 @@ class Disassembler():
             o.curr_section = s
 
         if until == ad:
-            if self.mem.is_code(ad) and ad in self.xrefs or \
-                    s is not None and ad == s.start:
+            if (
+                self.mem.is_code(ad)
+                and ad in self.xrefs
+                or s is not None
+                and ad == s.start
+            ):
                 if not o.last_2_lines_are_empty():
                     o._new_line()
 
@@ -542,7 +561,6 @@ class Disassembler():
         o.join_lines()
 
         return o
-
 
     def hexdump(self, ctx, lines):
         MAX_NB_BYTES = 16
@@ -588,7 +606,6 @@ class Disassembler():
 
         print_line(first_ad, buf)
 
-
     def print_functions(self, api):
         total = 0
 
@@ -601,8 +618,9 @@ class Disassembler():
             sy = api.get_symbol(ad)
 
             if ad in self.db.reverse_demangled:
-                print_no_end(" %s (%s) " % (self.db.reverse_demangled[ad],
-                                           color_comment(sy)))
+                print_no_end(
+                    " %s (%s) " % (self.db.reverse_demangled[ad], color_comment(sy))
+                )
             else:
                 print_no_end(" " + sy)
             print()
@@ -637,13 +655,18 @@ class Disassembler():
 
             print_sym = True
 
-            if sym_filter is None or \
-                    (invert_match and sym_filter not in sy.lower()) or \
-                    (not invert_match and sym_filter in sy.lower()) or \
-                    (dem is not None and
-                     ((invert_match and sym_filter not in dem.lower()) or \
-                      (not invert_match and sym_filter in dem.lower()))):
-
+            if (
+                sym_filter is None
+                or (invert_match and sym_filter not in sy.lower())
+                or (not invert_match and sym_filter in sy.lower())
+                or (
+                    dem is not None
+                    and (
+                        (invert_match and sym_filter not in dem.lower())
+                        or (not invert_match and sym_filter in dem.lower())
+                    )
+                )
+            ):
                 if sy:
                     print_no_end(color_addr(ad))
 
@@ -657,14 +680,13 @@ class Disassembler():
 
         print("Total:", total)
 
-
     def lazy_disasm(self, ad, stay_in_section=-1, s=None):
         s = self.binary.get_section(ad)
         if s is None:
             return None
 
         # if stay_in_section != -1 and s.start != stay_in_section:
-            # return None, s
+        # return None, s
 
         if ad in self.capstone_inst:
             return self.capstone_inst[ad]
@@ -691,7 +713,6 @@ class Disassembler():
 
         return first
 
-
     def __add_prefetch(self, addr_set, inst):
         if self.is_mips:
             prefetch = self.lazy_disasm(inst.address + inst.size)
@@ -699,15 +720,14 @@ class Disassembler():
             return prefetch
         return None
 
-
     def is_noreturn(self, ad):
         func_obj = self.functions[ad]
         if func_obj is None:
             return False
         return self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
-
     # Generate a flow graph of the given function (addr)
+
     def get_graph(self, entry):
         ARCH_UTILS = self.load_arch_module().utils
 
@@ -786,8 +806,10 @@ class Disassembler():
 
                     nxt_jmp = unsigned(op.value.imm)
 
-                    is_d1 =  direct_nxt in self.functions or self.db.mem.is_data(direct_nxt)
-                    is_d2 =  nxt_jmp in self.functions or self.db.mem.is_data(nxt_jmp)
+                    is_d1 = direct_nxt in self.functions or self.db.mem.is_data(
+                        direct_nxt
+                    )
+                    is_d2 = nxt_jmp in self.functions or self.db.mem.is_data(nxt_jmp)
 
                     if is_d1 and is_d2:
                         gph.new_node(inst, prefetch, None)
@@ -820,8 +842,11 @@ class Disassembler():
                             continue
 
                     if op.type == self.capstone.CS_OP_MEM:
-                        if ad in self.db.immediates and \
-                            self.binary.imports[self.db.immediates[ad]] & FUNC_FLAG_NORETURN:
+                        if (
+                            ad in self.db.immediates
+                            and self.binary.imports[self.db.immediates[ad]]
+                            & FUNC_FLAG_NORETURN
+                        ):
                             prefetch = self.__add_prefetch(addresses, inst)
                             gph.new_node(inst, prefetch, None)
                             gph.exit_or_ret.add(ad)

@@ -20,14 +20,22 @@
 import sys
 from time import time
 
-from plasma.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
-                            Ast_IfGoto, Ast_Ifelse, Ast_AndIf, Ast_Comment)
+from plasma.lib.ast import (
+    Ast_Branch,
+    Ast_Goto,
+    Ast_Loop,
+    Ast_If_cond,
+    Ast_IfGoto,
+    Ast_Ifelse,
+    Ast_AndIf,
+    Ast_Comment,
+)
 from plasma.lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from plasma.lib.exceptions import ExcIfelse
 from plasma.lib.colors import pick_color
 
 
-class Endpoint():
+class Endpoint:
     def __init__(self, ast, unseen, l_start):
         self.ast = [ast]
         self.unseen = unseen
@@ -44,12 +52,14 @@ def assign_colors(libarch, ctx, ast):
     if isinstance(ast, Ast_Branch):
         for n in ast.nodes:
             if isinstance(n, list):
-                if libarch.utils.is_uncond_jump(n[0]) and \
-                        n[0].operands[0].type == libarch.utils.OP_IMM and \
-                        n[0].address in ctx.gph.link_out:
+                if (
+                    libarch.utils.is_uncond_jump(n[0])
+                    and n[0].operands[0].type == libarch.utils.OP_IMM
+                    and n[0].address in ctx.gph.link_out
+                ):
                     nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
                     pick_color(nxt)
-            else: # ast
+            else:  # ast
                 assign_colors(libarch, ctx, n)
 
     elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
@@ -61,7 +71,6 @@ def assign_colors(libarch, ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         assign_colors(libarch, ctx, ast.branch)
-
 
 
 def get_first_addr(ast):
@@ -253,8 +262,10 @@ def __search_endpoint(ctx, ast, entry, l_set, l_prev_loop, l_start):
             # If "ad" is in last_node_loop we are sure that the path
             # will loop. So don't keep it if it's a subloop.
 
-            if ad in ctx.gph.last_node_loop and \
-                    (l_prev_loop, l_start) not in ctx.gph.last_node_loop[ad]:
+            if (
+                ad in ctx.gph.last_node_loop
+                and (l_prev_loop, l_start) not in ctx.gph.last_node_loop[ad]
+            ):
                 continue
 
             # If endpoint == loop : maybe the endpoint is at the end of the loop
@@ -342,8 +353,7 @@ def get_unseen_links_in(ad, l_set, l_prev_loop, l_start):
 
 def remove_unnecessary_goto(ast, ad):
     if len(ast.nodes) > 1:
-        if isinstance(ast.nodes[-1], Ast_Goto) and \
-                ast.nodes[-1].addr_jump == ad:
+        if isinstance(ast.nodes[-1], Ast_Goto) and ast.nodes[-1].addr_jump == ad:
             ast.nodes.pop(-1)
 
 
@@ -396,8 +406,9 @@ def rm_waiting(ctx, waiting, ad):
     return ast
 
 
-def manage_endpoint(ctx, waiting, ast, prev, ad, l_set, l_prev_loop,
-                    l_start, ad_is_visited):
+def manage_endpoint(
+    ctx, waiting, ast, prev, ad, l_set, l_prev_loop, l_start, ad_is_visited
+):
     if ad not in ctx.gph.link_in or len(ctx.gph.link_in[ad]) <= 1:
         return ast
 
@@ -449,7 +460,6 @@ def generate_ast(ctx__):
     libarch = ctx.gctx.libarch
 
     while stack or waiting:
-
         if not stack and waiting:
             if not ctx.gph.skipped_loops_analysis:
                 break
@@ -492,8 +502,9 @@ def generate_ast(ctx__):
 
         if curr not in visited:
             # Check if we need to stop and wait on a node
-            a = manage_endpoint(ctx, waiting, ast, prev, curr, l_set,
-                                l_prev_loop, l_start, True)
+            a = manage_endpoint(
+                ctx, waiting, ast, prev, curr, l_set, l_prev_loop, l_start, True
+            )
             if a is None:
                 continue
 
@@ -551,8 +562,9 @@ def generate_ast(ctx__):
 
         # Return instruction
         if curr not in ctx.gph.link_out:
-            if curr != ctx.entry and \
-                    (not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs):
+            if curr != ctx.entry and (
+                not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs
+            ):
                 do = True
 
                 if curr in ctx.gctx.db.reverse_symbols:
@@ -602,10 +614,12 @@ def generate_ast(ctx__):
 
                 # goto to exit a loop
                 if goto_set:
-                    stack.append((ast.parent, list(loops_stack), curr,
-                                  exit_loop, else_addr))
-                    stack.append((ast, list(loops_stack), curr,
-                                  nxt_node_in_loop, else_addr))
+                    stack.append(
+                        (ast.parent, list(loops_stack), curr, exit_loop, else_addr)
+                    )
+                    stack.append(
+                        (ast, list(loops_stack), curr, nxt_node_in_loop, else_addr)
+                    )
                     a = Ast_IfGoto(blk[0], cond_id, exit_loop, prefetch)
                     a.parent = ast
                     a.level = level
@@ -623,17 +637,25 @@ def generate_ast(ctx__):
                     ast.add(a)
                     ast.add(Ast_Goto(nxt[BRANCH_NEXT]))
 
-                    # Add a fake branch: when the manage_endpoint function will 
+                    # Add a fake branch: when the manage_endpoint function will
                     # choose a branch to continue an endpoint (it means that
                     # all branchs to this endpoint have been reached), it will
                     # never take the fake_br because the level is set to maxint.
                     # The fake_br will be invisible
 
-                    stack.append((fake_br, list(loops_stack), curr,
-                                  nxt[BRANCH_NEXT_JUMP], else_addr))
+                    stack.append(
+                        (
+                            fake_br,
+                            list(loops_stack),
+                            curr,
+                            nxt[BRANCH_NEXT_JUMP],
+                            else_addr,
+                        )
+                    )
 
-                    stack.append((ast, list(loops_stack), curr,
-                                  nxt[BRANCH_NEXT], else_addr))
+                    stack.append(
+                        (ast, list(loops_stack), curr, nxt[BRANCH_NEXT], else_addr)
+                    )
                     continue
 
                 # and-if
@@ -645,11 +667,13 @@ def generate_ast(ctx__):
                     ast.add(a)
                     ast.add(Ast_Goto(nxt[BRANCH_NEXT_JUMP]))
 
-                    stack.append((fake_br, list(loops_stack), curr,
-                                  nxt[BRANCH_NEXT], else_addr))
+                    stack.append(
+                        (fake_br, list(loops_stack), curr, nxt[BRANCH_NEXT], else_addr)
+                    )
 
-                    stack.append((ast, list(loops_stack), curr,
-                                  nxt[BRANCH_NEXT_JUMP], else_addr))
+                    stack.append(
+                        (ast, list(loops_stack), curr, nxt[BRANCH_NEXT_JUMP], else_addr)
+                    )
                     continue
 
             # if-else
@@ -679,20 +703,31 @@ def generate_ast(ctx__):
                     # endpoint is the beginning of the current loop) we don't
                     # re-add in the waiting list.
                     if endpoint not in visited:
-                        manage_endpoint(ctx, waiting, ast, -1, endpoint, l_set,
-                                        l_prev_loop, l_start, False)
+                        manage_endpoint(
+                            ctx,
+                            waiting,
+                            ast,
+                            -1,
+                            endpoint,
+                            l_set,
+                            l_prev_loop,
+                            l_start,
+                            False,
+                        )
                 else:
                     endpoint = -1
 
-            stack.append((ast_if, list(loops_stack), curr,
-                          nxt[BRANCH_NEXT], else_addr))
+            stack.append((ast_if, list(loops_stack), curr, nxt[BRANCH_NEXT], else_addr))
 
             if endpoint == -1:
                 # No endpoint, so it's not useful to have an else-branch
                 # -> the stack will continue on `ast`
-                a = Ast_Ifelse(blk[0], ast_else, ast_if, else_addr, prefetch, force_inv_if)
-                stack.append((ast, list(loops_stack), curr,
-                              nxt[BRANCH_NEXT_JUMP], else_addr))
+                a = Ast_Ifelse(
+                    blk[0], ast_else, ast_if, else_addr, prefetch, force_inv_if
+                )
+                stack.append(
+                    (ast, list(loops_stack), curr, nxt[BRANCH_NEXT_JUMP], else_addr)
+                )
 
                 a.parent = ast
                 a.level = level + 1
@@ -706,8 +741,9 @@ def generate_ast(ctx__):
 
                 # put the current ast instead of the ast_else
                 # -> it's not possible to invert this condition in the visual
-                stack.append((ast, list(loops_stack), curr,
-                              nxt[BRANCH_NEXT_JUMP], else_addr))
+                stack.append(
+                    (ast, list(loops_stack), curr, nxt[BRANCH_NEXT_JUMP], else_addr)
+                )
 
                 a.parent = ast
                 a.level = level + 1
@@ -716,9 +752,18 @@ def generate_ast(ctx__):
                 ast.add(Ast_Goto(else_addr))
 
             else:
-                a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch, force_inv_if)
-                stack.append((ast_else, list(loops_stack), curr,
-                              nxt[BRANCH_NEXT_JUMP], else_addr))
+                a = Ast_Ifelse(
+                    blk[0], ast_else, ast_if, endpoint, prefetch, force_inv_if
+                )
+                stack.append(
+                    (
+                        ast_else,
+                        list(loops_stack),
+                        curr,
+                        nxt[BRANCH_NEXT_JUMP],
+                        else_addr,
+                    )
+                )
 
                 a.parent = ast
                 a.level = level + 1
@@ -728,8 +773,7 @@ def generate_ast(ctx__):
 
         else:
             ast.add(blk)
-            stack.append((ast, loops_stack, curr,
-                          nxt[BRANCH_NEXT], else_addr))
+            stack.append((ast, loops_stack, curr, nxt[BRANCH_NEXT], else_addr))
 
     ast = ast_head
 
@@ -757,8 +801,9 @@ def generate_ast(ctx__):
     if waiting:
         ast_head.nodes.insert(0, Ast_Comment(""))
         ast_head.nodes.insert(0, Ast_Comment(""))
-        ast_head.nodes.insert(0,
-            Ast_Comment("WARNING: there is a bug, the output is incomplete !"))
+        ast_head.nodes.insert(
+            0, Ast_Comment("WARNING: there is a bug, the output is incomplete !")
+        )
         ast_head.nodes.insert(0, Ast_Comment(""))
         ast_head.nodes.insert(0, Ast_Comment(""))
         return ast, False

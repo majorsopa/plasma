@@ -24,7 +24,7 @@ from time import time
 from plasma.lib.custom_colors import COLOR_COMMENT
 
 
-class Widget():
+class Widget:
     def __init__(self, x, y, w, h):
         self.mapping = {}
         self.x = x
@@ -37,30 +37,23 @@ class Widget():
         self.value_selected = False
         self.is_passive = False
 
-
     def draw(self):
         raise NotImplementedError
-
 
     def draw_cursor(self):
         raise NotImplementedError
 
-
     def callback_mouse_up(self):
         raise NotImplementedError
-
 
     def callback_mouse_down(self):
         raise NotImplementedError
 
-
     def callback_mouse_left(self):
         raise NotImplementedError
 
-
     def callback_mouse_double_left(self):
         raise NotImplementedError
-
 
 
 class VertivalSep(Widget):
@@ -70,8 +63,7 @@ class VertivalSep(Widget):
         self.is_passive = True
         self.mapping = {}
 
-
     def draw(self):
-        c = color_pair(COLOR_COMMENT.val) #| A_REVERSE
+        c = color_pair(COLOR_COMMENT.val)  # | A_REVERSE
         for i in range(self.height):
             self.screen.addstr(i, 0, "▕", c)

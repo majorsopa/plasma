@@ -10,7 +10,7 @@ for s in api.iter_sections():
         if api.is_string(ad, s):
             string = api.get_string(ad, s)
             if len(string) >= 3:
-                buf.append("0x%x  \"%s\"\n" % (ad, string.replace("\n", "\\n")))
+                buf.append('0x%x  "%s"\n' % (ad, string.replace("\n", "\\n")))
             ad += len(string) + 1
         else:
             ad += 1
