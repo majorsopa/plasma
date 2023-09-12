@@ -22,8 +22,8 @@ import traceback
 import binascii
 
 from plasma.lib.utils import error, die
-from plasma.lib.custom_colors import *
-from plasma.lib.consts import *
+from plasma.lib.custom_colors import COLOR_SEARCH_FG, COLOR_SEARCH_BG
+from plasma.lib.consts import MODE_DUMP
 from plasma.lib.ui.window import Window
 from plasma.lib.ui.disasmbox import Disasmbox
 
@@ -51,7 +51,7 @@ class Visual(Window):
 
             try:
                 curses.init_pair(1, COLOR_SEARCH_FG, COLOR_SEARCH_BG)
-            except:
+            except Exception:
                 curses.nocbreak()
                 curses.echo()
                 curses.endwin()

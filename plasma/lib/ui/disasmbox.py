@@ -22,9 +22,17 @@ import traceback
 import binascii
 
 from plasma.lib.utils import error, die
-from plasma.lib.custom_colors import *
-from plasma.lib.consts import *
-from plasma.lib.ui.utils import *
+from plasma.lib.custom_colors import COLOR_USER_COMMENT, COLOR_COMMENT
+from plasma.lib.consts import (
+    MODE_DECOMPILE,
+    MODE_DUMP,
+    MEM_UNK,
+    MEM_BYTE,
+    MEM_ARRAY,
+    MEM_QOFFSET,
+    FUNC_FRAME_SIZE,
+)
+from plasma.lib.ui.utils import popup_inputbox, inputbox, popup_listbox
 from plasma.lib.ui.listbox import Listbox
 from plasma.lib.ui.inlineed import InlineEd
 from plasma.lib.output import OutputAbs
@@ -110,6 +118,7 @@ class Disasmbox(Listbox):
             b"g": self.main_k_top,
             b"G": self.main_k_bottom,
             b";": self.view_inline_comment_editor,
+            b":": self.view_multiline_comment_editor,
             b"%": self.main_cmd_next_bracket,
             b"\t": self.main_cmd_switch_mode,
             b"{": self.main_k_prev_paragraph,
@@ -303,13 +312,13 @@ class Disasmbox(Listbox):
             self.output.lines += o.lines
             self.output.token_lines += o.token_lines
 
-            for l in o.line_addr:
-                self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
-                self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
-                if l in self.output.idx_tok_inline_comm:
+            for line in o.line_addr:
+                self.output.line_addr[nb_new_lines + line] = o.line_addr[line]
+                self.output.addr_line[o.line_addr[line]] = nb_new_lines + line
+                if line in self.output.idx_tok_inline_comm:
                     self.output.idx_tok_inline_comm[
-                        nb_new_lines + l
-                    ] = o.idx_tok_inline_comm[l]
+                        nb_new_lines + line
+                    ] = o.idx_tok_inline_comm[line]
 
             self.set_last_addr()
 
@@ -466,13 +475,13 @@ class Disasmbox(Listbox):
             if word.startswith("var_"):
                 try:
                     off = -int(word[word.index("_") + 1 :], 16)
-                except:
+                except Exception:
                     return True
                 word = ""
             elif word.startswith("arg_"):
                 try:
                     off = int(word[word.index("_") + 1 :], 16)
-                except:
+                except Exception:
                     return True
                 word = ""
             else:
@@ -595,7 +604,7 @@ class Disasmbox(Listbox):
         if text[0] == "!":
             try:
                 textenc = binascii.unhexlify(text[1:].replace(" ", ""))
-            except:
+            except Exception:
                 self.status_bar_message("error: search not in hexa", True)
                 return False
         else:
@@ -615,6 +624,74 @@ class Disasmbox(Listbox):
         if self.search_bin is None:
             return False
         return self.__search(self.search_bin, forward=False)
+
+    def view_multiline_comment_editor(self):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return True
+
+        addr = self.output.line_addr[line]
+
+        # The same address can be repeated on multiple lines
+        # With this we are sure to be everytime on the same line
+        new_line = self.output.addr_line[addr] + 1
+
+        if new_line != line:
+            self.goto_line(new_line)
+            line = new_line
+            self.draw()
+
+        tok_line = list(self.output.token_lines[line])
+        str_line = str(self.output.lines[line])
+
+        # A user comment should always be at the end of the line
+
+        # Get coords of the user comment
+        if addr in self.db.user_inline_comments:
+            xbegin = self.output.idx_tok_inline_comm[line]
+            str_line = str_line[:xbegin]
+            tok_line.pop(-1)
+            text = self.db.user_inline_comments[addr]
+            is_new_token = False
+        else:
+            tok_line.append(("\n; ", COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold))
+            str_line += "\n; "
+            xbegin = len(self.output.lines[line]) + 3
+            text = ""
+            is_new_token = True
+
+        self.status_bar_message("-- INLINE COMMENT --")
+
+        idx_token = len(tok_line)
+        ed = InlineEd(line, xbegin, idx_token, text, COLOR_USER_COMMENT.val, tok_line)
+        ed.cursor_x = self.cursor_x
+        ed.cursor_y = self.cursor_y
+
+        ret = ed.start_view(self.screen)
+
+        if ret:
+            self.db.modified = True
+            if ed.text:
+                self.db.user_inline_comments[addr] = ed.text
+                o = (ed.text, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold)
+                ed.tok_line.append(o)
+                str_line += ed.text
+
+                self.output.lines[line] = str_line
+                self.output.token_lines[line] = ed.tok_line
+                self.output.idx_tok_inline_comm[line] = xbegin
+
+            else:
+                ed.tok_line.pop(-1)  # remove the " ; "
+                str_line = str_line[:-3]
+
+                self.output.token_lines[line] = ed.tok_line
+                self.output.lines[line] = str_line
+
+                if not is_new_token:
+                    del self.db.user_inline_comments[addr]
+
+        return True
 
     def view_inline_comment_editor(self):
         line = self.win_y + self.cursor_y
@@ -685,20 +762,20 @@ class Disasmbox(Listbox):
         return True
 
     def main_k_prev_paragraph(self):
-        l = self.win_y + self.cursor_y - 1
-        while l > 0 and len(self.output.lines[l]) != 0:
-            l -= 1
-        if l >= 0:
-            self.goto_line(l)
+        line = self.win_y + self.cursor_y - 1
+        while line > 0 and len(self.output.lines[line]) != 0:
+            line -= 1
+        if line >= 0:
+            self.goto_line(line)
             self.check_cursor_x()
         return True
 
     def main_k_next_paragraph(self):
-        l = self.win_y + self.cursor_y + 1
-        while l < len(self.output.lines) - 1 and len(self.output.lines[l]) != 0:
-            l += 1
-        if l < len(self.output.lines):
-            self.goto_line(l)
+        line = self.win_y + self.cursor_y + 1
+        while line < len(self.output.lines) - 1 and len(self.output.lines[line]) != 0:
+            line += 1
+        if line < len(self.output.lines):
+            self.goto_line(line)
             self.check_cursor_x()
         return True
 
@@ -1223,7 +1300,7 @@ class Disasmbox(Listbox):
 
         try:
             new_frame_size = int(text)
-        except:
+        except Exception:
             self.draw()
             self.status_bar_message("error: not an integer")
             return False

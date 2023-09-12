@@ -18,8 +18,7 @@
 #
 
 from curses import color_pair
-
-from plasma.lib.custom_colors import *
+import curses
 
 
 MOUSE_EVENT = [0x1B, 0x5B, 0x4D]
