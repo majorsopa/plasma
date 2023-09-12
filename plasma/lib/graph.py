@@ -28,19 +28,20 @@ MAX_NODES = 800
 # This class is used only for the decompilation mode. The analyzer create
 # also a graph but only on-the-fly.
 
+
 class Graph:
     def __init__(self, dis, entry_point_addr):
         # Each node contains a block (list) of instructions.
-        self.nodes = {} # ad -> [instruction, (prefetch)]
+        self.nodes = {}  # ad -> [instruction, (prefetch)]
 
         # For each address block, we store a list of next blocks.
         # If there are 2 elements it means that the precedent instruction
         # was a conditional jump :
         # 1st : direct next instruction
         # 2nd : for conditional jump : address of the jump
-        self.link_out = {} # ad -> [nxt1, nxt2]
-        
-        self.link_in = {} # ad -> [prev, ...]
+        self.link_out = {}  # ad -> [nxt1, nxt2]
+
+        self.link_in = {}  # ad -> [prev, ...]
 
         self.entry_point_addr = entry_point_addr
         self.dis = dis
@@ -82,7 +83,6 @@ class Graph:
         # Could be modified by AddrContext.decompile
         self.debug = False
 
-
     # A jump is normally alone in a block, but for some architectures
     # we save the prefetched instruction after.
 
@@ -103,13 +103,12 @@ class Graph:
         if prefetch is not None:
             self.nodes[ad].append(prefetch)
 
-
     def exists(self, inst):
         return inst.address in self.nodes
 
-
     # Concat instructions in single block
     # jumps are in separated blocks
+
     def simplify(self):
         nodes = list(self.nodes.keys())
         start = time()
@@ -118,8 +117,11 @@ class Graph:
             if ad in self.uncond_jumps_set or ad in self.cond_jumps_set:
                 continue
 
-            if ad not in self.link_in or len(self.link_in[ad]) != 1 or \
-                    ad == self.entry_point_addr:
+            if (
+                ad not in self.link_in
+                or len(self.link_in[ad]) != 1
+                or ad == self.entry_point_addr
+            ):
                 continue
 
             pred = self.link_in[ad][0]
@@ -153,11 +155,12 @@ class Graph:
         elapsed = elapsed - start
         debug__("Graph simplified in %fs (%d nodes)" % (elapsed, len(self.nodes)))
 
-
     def dot_loop_deps(self):
         output = open("graph_loop_deps.dot", "w+")
-        output.write('digraph {\n')
-        output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
+        output.write("digraph {\n")
+        output.write(
+            'node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n'
+        )
 
         for k, dp in self.deps.items():
             output.write('node_%x_%x [label="(%x, %x)"' % (k[0], k[1], k[0], k[1]))
@@ -168,22 +171,24 @@ class Graph:
             if k in self.all_deep_equiv:
                 output.write(' color="#ff0000"')
 
-            output.write('];\n')
+            output.write("];\n")
 
             for sub in dp:
-                output.write('node_%x_%x -> node_%x_%x;\n'
-                        % (k[0], k[1], sub[0], sub[1]))
+                output.write(
+                    "node_%x_%x -> node_%x_%x;\n" % (k[0], k[1], sub[0], sub[1])
+                )
 
-        output.write('}\n')
+        output.write("}\n")
         output.close()
-
 
     def dot_graph(self, jmptables):
         output = open("graph.dot", "w+")
-        output.write('digraph {\n')
+        output.write("digraph {\n")
         # output.write('graph [bgcolor="#aaaaaa" pad=20];\n')
         # output.write('node [fontname="liberation mono" style=filled fillcolor="#333333" fontcolor="#d3d3d3" shape=box];\n')
-        output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
+        output.write(
+            'node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n'
+        )
 
         keys = list(self.nodes.keys())
         keys.sort()
@@ -194,7 +199,7 @@ class Graph:
             output.write('node_%x [label="' % k)
 
             for i in lst_i:
-                output.write('0x%x: %s %s\\l' % (i.address, i.mnemonic, i.op_str))
+                output.write("0x%x: %s %s\\l" % (i.address, i.mnemonic, i.op_str))
 
             output.write('"')
 
@@ -205,26 +210,27 @@ class Graph:
             elif k not in self.link_in:
                 output.write(' fillcolor="#B6FFDD"')
 
-            output.write('];\n')
-        
+            output.write("];\n")
+
         for k, i in self.link_out.items():
             if k in jmptables:
                 for ad in jmptables[k].table:
-                    output.write('node_%x -> node_%x;\n' % (k, ad))
+                    output.write("node_%x -> node_%x;\n" % (k, ad))
             elif len(i) == 2:
                 # true green branch (jump is taken)
-                output.write('node_%x -> node_%x [color="#58DA9C"];\n'
-                        % (k, i[BRANCH_NEXT_JUMP]))
+                output.write(
+                    'node_%x -> node_%x [color="#58DA9C"];\n' % (k, i[BRANCH_NEXT_JUMP])
+                )
 
                 # false red branch (jump is not taken)
-                output.write('node_%x -> node_%x [color="#ff7777"];\n'
-                        % (k, i[BRANCH_NEXT]))
+                output.write(
+                    'node_%x -> node_%x [color="#ff7777"];\n' % (k, i[BRANCH_NEXT])
+                )
             else:
-                output.write('node_%x -> node_%x;\n' % (k, i[BRANCH_NEXT]))
+                output.write("node_%x -> node_%x;\n" % (k, i[BRANCH_NEXT]))
 
-        output.write('}')
+        output.write("}")
         output.close()
-
 
     def __search_last_node_loop(self, l_prev_loop, l_start, l_set):
         def __rec_branch_go_out(ad):
@@ -276,7 +282,6 @@ class Graph:
                 self.last_node_loop[ad] = set()
             self.last_node_loop[ad].add((l_prev_loop, l_start))
 
-
     def __is_inf_loop(self, l_set):
         for ad in l_set:
             if ad in self.link_out:
@@ -284,7 +289,6 @@ class Graph:
                     if nxt not in l_set:
                         return False
         return True
-
 
     def path_exists(self, from_addr, to_addr, loop_start):
         def __path_exists(curr, local_visited):
@@ -318,9 +322,9 @@ class Graph:
         self.cache_path_exists[(from_addr, to_addr)] = res
         return res
 
-
     # Returns a set containing every addresses which are in paths from
     # 'from_addr' to 'to_addr'.
+
     def find_paths(self, from_addr, to_addr, global_visited):
         def __rec_find_paths(curr, local_visited, path_set):
             nonlocal isfirst
@@ -345,7 +349,6 @@ class Graph:
         __rec_find_paths(from_addr, local_visited, path_set)
         return path_set
 
-
     def __try_find_loops(self, entry, waiting, par_loops, l_set, is_sub_loop):
         detected_loops = {}
         keys = set(waiting.keys())
@@ -368,9 +371,9 @@ class Graph:
 
         return detected_loops
 
-
     # This function removes entries in waiting list if we have seen
     # all previous nodes for one node.
+
     def __manage_waiting(self, stack, visited, waiting, l_set, done):
         keys = set(waiting.keys())
         for ad in keys:
@@ -381,14 +384,15 @@ class Graph:
                 done.add(ad)
                 stack.append((-1, ad))
 
-
     # This function reads all nodes in the current stack.
     # Each node is added to the waiting list if all previous
     # nodes were not seen.
     # Then if there is an out-link, this new node is added to
     # the stack, and it returns True.
-    def __until_stack_empty(self, stack, waiting, visited,
-                            par_loops, l_set, is_sub_loop, done):
+
+    def __until_stack_empty(
+        self, stack, waiting, visited, par_loops, l_set, is_sub_loop, done
+    ):
         has_moved = False
 
         while stack:
@@ -422,7 +426,6 @@ class Graph:
 
         return has_moved
 
-
     def __get_new_loops(self, waiting, detected_loops, l_set, is_sub_loop):
         new_loops = set()
 
@@ -453,8 +456,8 @@ class Graph:
 
         return new_loops
 
-
     # It explores the graph and detects loops
+
     def __explore(self, entry, par_loops, visited, waiting, l_set, done):
         stack = []
 
@@ -474,15 +477,18 @@ class Graph:
         while 1:
             # first: manage pending nodes
             if self.__until_stack_empty(
-                    stack, waiting, visited, par_loops, l_set, is_sub_loop, done):
+                stack, waiting, visited, par_loops, l_set, is_sub_loop, done
+            ):
                 self.__manage_waiting(stack, visited, waiting, l_set, done)
                 continue
 
             detected_loops = self.__try_find_loops(
-                    entry, waiting, par_loops, l_set, is_sub_loop)
+                entry, waiting, par_loops, l_set, is_sub_loop
+            )
 
             new_loops = self.__get_new_loops(
-                    waiting, detected_loops, l_set, is_sub_loop)
+                waiting, detected_loops, l_set, is_sub_loop
+            )
 
             while new_loops:
                 # Follow loops
@@ -497,11 +503,12 @@ class Graph:
                     self.__explore(ad, pl, v, waiting, l, set(done))
 
                 detected_loops = self.__try_find_loops(
-                        entry, waiting, par_loops, l_set, is_sub_loop)
+                    entry, waiting, par_loops, l_set, is_sub_loop
+                )
 
                 new_loops = self.__get_new_loops(
-                        waiting, detected_loops, l_set, is_sub_loop)
-
+                    waiting, detected_loops, l_set, is_sub_loop
+                )
 
             self.__manage_waiting(stack, visited, waiting, l_set, done)
 
@@ -532,16 +539,15 @@ class Graph:
                     self.deps[k1].add(k2)
                     self.loops_all[(entry, ad)].update(self.loops_all[(prev, start)])
 
-
     def all_false(self, loops_key):
         for k in loops_key:
             if k not in self.false_loops:
                 return False
         return True
 
-
     # Mark recursively parent loops, all children of a loop must
     # have been set to false
+
     def __rec_mark_parent_false(self, k):
         self.false_loops.add(k)
         if k not in self.rev_deps:
@@ -554,13 +560,11 @@ class Graph:
             if self.all_false(self.deps[par]):
                 self.__rec_mark_parent_false(par)
 
-
     def __rec_mark_children(self, k, myset):
         myset.add(k)
         for sub in self.deps[k]:
             if sub not in self.false_loops:
                 self.__rec_mark_children(sub, myset)
-
 
     def __yield_cmp_loops(self, keys1, not_in_false=True):
         # optim: don't compare twice two loops
@@ -574,8 +578,8 @@ class Graph:
                     continue
                 yield k1, k2
 
-
     # Some heuristics to detect false loops
+
     def __search_false_loops(self):
         # If all previous link of a loop start is inside the loop, this
         # is a false loop.
@@ -591,18 +595,16 @@ class Graph:
             if lin.issubset(l_set):
                 self.false_loops.add((prev, start))
 
-
         # Find loops at the last level (no loop inside)
         loops_to_check = set()
         for k in self.loops_all:
             if len(self.deps[k]) == 0:
                 loops_to_check.add(k)
 
-
         # Now try to find other false loops...
-        for (prev1, start1), (prev2, start2) in \
-                    self.__yield_cmp_loops(self.loops_all.keys()):
-
+        for (prev1, start1), (prev2, start2) in self.__yield_cmp_loops(
+            self.loops_all.keys()
+        ):
             if (prev1, start1) not in loops_to_check:
                 continue
 
@@ -612,12 +614,9 @@ class Graph:
             if start1 == start2:
                 continue
 
-            if prev1 in l2 and \
-                 start1 in l2 and \
-                 start2 in l1:
+            if prev1 in l2 and start1 in l2 and start2 in l1:
                 if l1.issubset(l2):
                     self.__rec_mark_parent_false((prev1, start1))
-
 
         # Make a diff to keep only real loops (false loops will be
         # deleted by __update_loops)
@@ -630,7 +629,6 @@ class Graph:
             self.__rec_mark_children(k, correct_loops)
 
         self.false_loops = self.loops_all.keys() - correct_loops
-
 
     def __search_same_deep_equiv_loops(self):
         #
@@ -705,7 +703,6 @@ class Graph:
                             keys.remove(k)
                             self.__rec_mark_parent_false(k)
 
-
     def __update_loops(self):
         def rec_remove(k):
             if k not in self.loops_all:
@@ -715,10 +712,10 @@ class Graph:
             for sub in self.deps[k]:
                 if sub in self.false_loops:
                     rec_remove(sub)
+
         for k in self.false_loops:
             if k not in self.rev_deps or k in self.all_deep_equiv:
                 rec_remove(k)
-
 
     def loop_detection(self, entry, bypass_false_search=False):
         start = time()
@@ -789,5 +786,4 @@ class Graph:
 
         elapsed = time()
         elapsed = elapsed - start
-        debug__("Exploration: found %d loop(s) in %fs" %
-                (len(self.loops_all), elapsed))
+        debug__("Exploration: found %d loop(s) in %fs" % (len(self.loops_all), elapsed))

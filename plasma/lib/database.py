@@ -38,18 +38,17 @@ VERSION = 2.9
 LAST_COMPATIBLE = 2.7
 
 
-class Database():
+class Database:
     def __init__(self):
         self.__init_vars()
 
         if msgpack.version < (0, 4, 6):
             warning("your version of msgpack is less than 0.4.6")
 
-
     def __init_vars(self):
         self.history = []
-        self.symbols = {} # name -> addr
-        self.demangled = {} # name -> addr
+        self.symbols = {}  # name -> addr
+        self.demangled = {}  # name -> addr
         self.user_inline_comments = {}
         self.internal_inline_comments = {}
         self.user_previous_comments = {}
@@ -58,7 +57,7 @@ class Database():
         self.mips_gp = 0
         self.modified = False
         self.loaded = False
-        self.mem = None # see lib.memory
+        self.mem = None  # see lib.memory
         # func address ->
         #  [ end addr,
         #    flags,
@@ -69,13 +68,13 @@ class Database():
         #    args_restore,
         #  ]
         self.functions = {}
-        self.func_id = {} # id -> func address
-        self.xrefs = {} # addr -> list addr
+        self.func_id = {}  # id -> func address
+        self.xrefs = {}  # addr -> list addr
         # For big data (arrays/strings) we save all addresses with an xrefs
-        self.data_sub_xrefs = {} # data_address -> {addresses_with_xrefs: True}
-        self.imports = {} # ad -> flags
-        self.immediates = {} # insn_ad -> immediate result
-        self.inverted_cond = {} # addr -> arbitrary_value
+        self.data_sub_xrefs = {}  # data_address -> {addresses_with_xrefs: True}
+        self.imports = {}  # ad -> flags
+        self.immediates = {}  # insn_ad -> immediate result
+        self.inverted_cond = {}  # addr -> arbitrary_value
 
         self.raw_base = 0
         self.raw_type = None
@@ -84,10 +83,9 @@ class Database():
         # Computed variables
         self.func_id_counter = 0
         self.end_functions = {}
-        self.reverse_symbols = {} # addr -> name
-        self.reverse_demangled = {} # addr -> name
+        self.reverse_symbols = {}  # addr -> name
+        self.reverse_demangled = {}  # addr -> name
         self.version = VERSION
-
 
     def load(self, filename):
         gc.disable()
@@ -126,7 +124,6 @@ class Database():
             self.loaded = True
 
         gc.enable()
-
 
     def save(self, history):
         data = {
@@ -168,7 +165,6 @@ class Database():
         fd.write(zlib.compress(msgpack.packb(data, use_bin_type=True)))
         fd.close()
 
-
     def __load_symbols(self, data):
         self.symbols = data["symbols"]
 
@@ -189,42 +185,35 @@ class Database():
             self.reverse_symbols[ad] = name
             self.symbols[name] = ad
 
-
     def __load_comments(self, data):
         self.user_inline_comments = data["user_inline_comments"]
         self.internal_inline_comments = data["internal_inline_comments"]
         self.user_previous_comments = data["user_previous_comments"]
         self.internal_previous_comments = data["internal_previous_comments"]
 
-
     def __load_jmptables(self, data):
         for j in data["jmptables"]:
-            self.jmptables[j["inst_addr"]] = \
-                Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
-
+            self.jmptables[j["inst_addr"]] = Jmptable(
+                j["inst_addr"], j["table_addr"], j["table"], j["name"]
+            )
 
     def __load_meta(self, data):
         self.mips_gp = data["mips_gp"]
         self.version = data["version"]
 
-
     def __load_memory(self, data):
         self.mem = Memory()
         self.mem.mm = data["mem"]
 
-
     def __load_history(self, data):
         self.history = data["history"]
-
 
     def __load_immediates(self, data):
         self.immediates = data["immediates"]
 
-
     def __load_xrefs(self, data):
         self.xrefs = data["xrefs"]
         self.data_sub_xrefs = data["data_sub_xrefs"]
-
 
     def __load_imports(self, data):
         self.imports = data["imports"]
@@ -234,7 +223,6 @@ class Database():
                 name = self.reverse_symbols[ad]
                 if name in NORETURN_ELF or name in NORETURN_PE:
                     self.imports[ad] = FUNC_FLAG_NORETURN
-
 
     def __load_functions(self, data):
         self.functions = data["functions"]
@@ -254,7 +242,6 @@ class Database():
             self.func_id_counter = data["func_id_counter"]
         except:
             self.func_id_counter = max(self.func_id.keys()) + 1
-
 
     def __load_inverted_cond(self, data):
         if "inverted_cond" in data:

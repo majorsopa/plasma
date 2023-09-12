@@ -37,6 +37,7 @@ def console_entry():
 
     if gctx.interactive_mode:
         from plasma.lib.ui.console import Console
+
         gctx.is_interactive = True
         Console(gctx)
 

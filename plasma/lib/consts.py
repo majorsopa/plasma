@@ -39,8 +39,8 @@ MEM_STRUCT = 13
 # the end of the data. It allows to scroll up correctly in the visual mode.
 # BLOCK_SIZE should not be too big otherwise performance will decrease.
 MEM_HEAD = 50
-BLOCK_SIZE = 64 # should be a power of 2
-BLOCK_SIZE_MASK = 64-1
+BLOCK_SIZE = 64  # should be a power of 2
+BLOCK_SIZE_MASK = 64 - 1
 
 
 # Index of values for each Database.functions[i]
@@ -65,17 +65,42 @@ FUNC_FLAG_ERR_STACK_ANALYSIS = 0b100
 
 # Known functions which never returns
 NORETURN_ELF = {
-    "exit", "_exit", "__stack_chk_fail", "err", "verr", "errx", "verrx",
-    "abort", "__assert_fail", "__libc_start_main", "perror", "__cxa_rethrow",
-    "__cxa_throw", "__cxa_call_terminate", "__cxa_bad_cast", "__cxa_call_unexpected",
-    "__cxa_call_unexpected", "__terminate", "__unexpected", "_ZSt9terminatev",
+    "exit",
+    "_exit",
+    "__stack_chk_fail",
+    "err",
+    "verr",
+    "errx",
+    "verrx",
+    "abort",
+    "__assert_fail",
+    "__libc_start_main",
+    "perror",
+    "__cxa_rethrow",
+    "__cxa_throw",
+    "__cxa_call_terminate",
+    "__cxa_bad_cast",
+    "__cxa_call_unexpected",
+    "__cxa_call_unexpected",
+    "__terminate",
+    "__unexpected",
+    "_ZSt9terminatev",
     "_ZSt16__throw_bad_castv",
 }
 
 NORETURN_PE = {
-    "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort",
-    "_CxxThrowException", "quick_exit", "RaiseException", "_ExitProcess",
-    "_ZSt9terminatev", "_ZSt16__throw_bad_castv",
+    "exit",
+    "ExitProcess",
+    "_exit",
+    "quick_exit",
+    "_Exit",
+    "abort",
+    "_CxxThrowException",
+    "quick_exit",
+    "RaiseException",
+    "_ExitProcess",
+    "_ZSt9terminatev",
+    "_ZSt16__throw_bad_castv",
 }
 
 
@@ -88,9 +113,21 @@ NB_LINES_TO_DISASM = 150
 CAPSTONE_CACHE_SIZE = 60000
 
 
-RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_",
-                   "var_", "break_"]
+RESERVED_PREFIX = [
+    "loc_",
+    "sub_",
+    "unk_",
+    "byte_",
+    "word_",
+    "dword_",
+    "qword_",
+    "asc_",
+    "off_",
+    "ret_",
+    "loop_",
+    "var_",
+    "break_",
+]
 
 MODE_DUMP = 1
 MODE_DECOMPILE = 2

@@ -18,20 +18,18 @@
 #
 
 from curses import color_pair
+import curses
 
-from plasma.lib.custom_colors import *
 
-
-MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
+MOUSE_EVENT = [0x1B, 0x5B, 0x4D]
 MOUSE_INTERVAL = 200
 
 
 # TODO: not a very clean class...
 
 
-class InlineEd():
-    def __init__(self, line, xbegin, idx_token, text,
-                 color, tok_line):
+class InlineEd:
+    def __init__(self, line, xbegin, idx_token, text, color, tok_line):
         self.set_key_timeout = True
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
         self.cursor_y = 0
@@ -46,8 +44,8 @@ class InlineEd():
             b"\x1b\x5b\x33\x7e": self.k_delete,
             b"\x15": self.k_ctrl_u,
             b"\x0b": self.k_ctrl_k,
-            b"\x01": self.k_home, # ctrl-a
-            b"\x05": self.k_end, # ctrl-e
+            b"\x01": self.k_home,  # ctrl-a
+            b"\x05": self.k_end,  # ctrl-e
         }
 
         self.xbegin = xbegin
@@ -57,8 +55,8 @@ class InlineEd():
         self.color = color
         self.tok_line = tok_line
 
-
     # TODO : copied from lib.ui.window
+
     def read_escape_keys(self):
         if self.set_key_timeout:
             self.screen.timeout(-1)
@@ -68,7 +66,7 @@ class InlineEd():
 
         if k != -1:
             while k:
-                seq.append(k & 0xff)
+                seq.append(k & 0xFF)
                 k >>= 8
 
             self.screen.timeout(0)
@@ -87,8 +85,6 @@ class InlineEd():
 
         self.set_key_timeout = True
         return bytes(seq)
-
-
 
     def start_view(self, screen):
         screen.move(0, 1)
@@ -112,7 +108,7 @@ class InlineEd():
 
             keys = self.read_escape_keys()
 
-            if keys == b"\x1b": # escape = cancel
+            if keys == b"\x1b":  # escape = cancel
                 self.text = "".join(self.text)
                 break
 
@@ -138,12 +134,11 @@ class InlineEd():
 
         return False
 
-
     def print_line(self, w, y):
         force_exit = False
         x = 0
         i = 0
-        printed = False # the string currently edited
+        printed = False  # the string currently edited
 
         while i < len(self.tok_line) or not printed:
             if not printed and i == self.idx_token:
@@ -156,7 +151,7 @@ class InlineEd():
                 i += 1
 
             if x + len(string) >= w:
-                string = string[:w-x-1]
+                string = string[: w - x - 1]
                 force_exit = True
 
             c = color_pair(col)
@@ -169,7 +164,6 @@ class InlineEd():
             x += len(string)
             if force_exit:
                 break
-
 
     def k_left(self, i, w):
         if i != 0:
@@ -189,7 +183,7 @@ class InlineEd():
 
     def k_backspace(self, i, w):
         if i != 0:
-            del self.text[i-1]
+            del self.text[i - 1]
             i -= 1
             self.cursor_x -= 1
         return i

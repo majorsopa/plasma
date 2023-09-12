@@ -23,7 +23,7 @@ from plasma.lib.fileformat.binary import SectionAbs
 from plasma.lib.consts import *
 
 
-class Jmptable():
+class Jmptable:
     def __init__(self, inst_addr, table_addr, table, name):
         self.inst_addr = inst_addr
         self.table_addr = table_addr
@@ -31,7 +31,7 @@ class Jmptable():
         self.name = name
 
 
-class Api():
+class Api:
     def __init__(self, gctx, analyzer):
         self.__gctx = gctx
         self.__binary = gctx.dis.binary
@@ -43,18 +43,17 @@ class Api():
         self.arch = gctx.dis.binary.arch
         self.is_big_endian = gctx.dis.binary.is_big_endian()
 
-
     def entry_point(self):
         """
         Returns the address of the entry point.
         """
         return self.__binary.get_entry_point()
 
-
     # This function remove all xrefs for arrays and offsets.
     # It's called only from set_* functions to create data
     # For security, we must run explicitly the "undefine" function
     # on code and function to create bytes or something else.
+
     def __undefine(self, ad, force=False):
         # TODO: remove comments
 
@@ -85,7 +84,6 @@ class Api():
                 self.rm_xref(ad, off)
 
         return True
-
 
     def undefine(self, ad):
         """
@@ -124,7 +122,6 @@ class Api():
 
         return True
 
-
     def set_code(self, ad):
         """
         Analyze and create instructions at the address ad.
@@ -137,24 +134,26 @@ class Api():
         self.__queue_wait.get()
         return True
 
-
     def set_function(self, ad):
         """
         Define and analyze a function at the address ad.
         TODO: check if nothing is erased before.
         returns True if ok
         """
-        if self.mem.is_func(ad) or self.mem.get_func_id(ad) != -1 or \
-                self.mem.is_overlapping(ad):
+        if (
+            self.mem.is_func(ad)
+            or self.mem.get_func_id(ad) != -1
+            or self.mem.is_overlapping(ad)
+        ):
             return False
         self.__analyzer.msg.put((ad, True, True, False, self.__queue_wait))
         self.__queue_wait.get()
         return True
 
-
     # To avoid too much references to a byte in the memory class, we keep
     # only bytes with an xref, otherwise a byte is equivalent to an unknown
     # data.
+
     def set_byte(self, ad):
         """
         Define a byte at ad. If there is no xref to ad, the byte is
@@ -171,7 +170,6 @@ class Api():
             self.mem.rm_range(ad, max(self.mem.get_size(ad), 1))
         return True
 
-
     def set_word(self, ad):
         """
         Define a word at ad (2 bytes).
@@ -182,7 +180,6 @@ class Api():
             return False
         self.mem.add(ad, 2, MEM_WORD)
         return True
-
 
     def set_dword(self, ad):
         """
@@ -195,7 +192,6 @@ class Api():
         self.mem.add(ad, 4, MEM_DWORD)
         return True
 
-
     def set_qword(self, ad):
         """
         Define a qword at ad (8 bytes).
@@ -206,7 +202,6 @@ class Api():
             return False
         self.mem.add(ad, 8, MEM_QWORD)
         return True
-
 
     def set_ascii(self, ad):
         """
@@ -221,7 +216,6 @@ class Api():
             return False
         self.mem.add(ad, sz, MEM_ASCII)
         return True
-
 
     def set_offset(self, ad, ty=None, async_analysis=True, dont_analyze=False):
         """
@@ -273,15 +267,21 @@ class Api():
         if self.__analyzer.first_inst_are_code(off):
             if async_analysis:
                 self.__analyzer.msg.put(
-                    (off, self.__analyzer.has_prolog(off), False, True,
-                     self.__queue_wait))
+                    (
+                        off,
+                        self.__analyzer.has_prolog(off),
+                        False,
+                        True,
+                        self.__queue_wait,
+                    )
+                )
                 self.__queue_wait.get()
             else:
                 self.__analyzer.analyze_flow(
-                    off, self.__analyzer.has_prolog(off), False, True)
+                    off, self.__analyzer.has_prolog(off), False, True
+                )
 
         return True
-
 
     def set_array(self, ad, nb_entries, entry_type, dont_analyze=False):
         """
@@ -304,14 +304,17 @@ class Api():
             while i < end:
                 ty = self.mem.get_type(i)
                 if not (MEM_WOFFSET <= ty <= MEM_QOFFSET):
-                    self.set_offset(i, self.mem.get_type_from_size(entry_size), dont_analyze=dont_analyze)
+                    self.set_offset(
+                        i,
+                        self.mem.get_type_from_size(entry_size),
+                        dont_analyze=dont_analyze,
+                    )
                 i += entry_size
         elif not self.__undefine(ad):
             return False
 
         self.mem.add(ad, sz, MEM_ARRAY, entry_type)
         return True
-
 
     def is_string(self, ad, section=None, min_bytes=2):
         """
@@ -326,7 +329,6 @@ class Api():
             return False
         return True
 
-
     def get_string(self, ad, section=None):
         """
         Returns the string at ad (str type). If the buffer is not
@@ -336,7 +338,6 @@ class Api():
         optimization and used to not recall get_section.
         """
         return self.__binary.get_string(ad, s=section)
-
 
     def read_byte(self, ad, section=None):
         """
@@ -350,7 +351,6 @@ class Api():
                 return None
         return section.read_byte(ad)
 
-
     def read_word(self, ad, section=None):
         """
         Read a word, it returns None if ad is not an address.
@@ -362,7 +362,6 @@ class Api():
             if section is None:
                 return None
         return section.read_word(ad)
-
 
     def read_dword(self, ad, section=None):
         """
@@ -377,7 +376,6 @@ class Api():
                 return None
         return section.read_dword(ad)
 
-
     def read_qword(self, ad, section=None):
         """
         Read a qword, it returns None if ad is not an address.
@@ -391,16 +389,15 @@ class Api():
                 return None
         return section.read_qword(ad)
 
-
     def get_section(self, ad):
         """
         Returns a section or None if ad is not an address.
         """
         return self.__binary.get_section(ad)
 
-
-    def add_section(self, start_address, name, virt_size, real_size,
-                    is_exec, is_data, data):
+    def add_section(
+        self, start_address, name, virt_size, real_size, is_exec, is_data, data
+    ):
         """
         Create a new section at start_address. name is a string and data
         is a bytes. The real_size should be less than virt_size, but nothing
@@ -408,9 +405,9 @@ class Api():
         """
         if virt_size < real_size:
             return
-        self.__binary.add_section(start_address, name, virt_size,
-                real_size, is_exec, is_data, data)
-
+        self.__binary.add_section(
+            start_address, name, virt_size, real_size, is_exec, is_data, data
+        )
 
     def iter_sections(self):
         """
@@ -418,14 +415,13 @@ class Api():
         """
         return self.__binary.iter_sections()
 
-
     def read_array(self, ad, nb_entries, size_word, section=None):
         """
         Returns a list of words at the address ad. size_word must be in
         [1, 2, 4, 8] otherwise the function returns None. The returned
         list could be less than nb_entries if it's at the end of a
         section.
-        
+
         The parameter section is the section where ad is. It's just use for
         optimization and used to not recall get_section.
         """
@@ -447,7 +443,6 @@ class Api():
             l += 1
         return array
 
-
     def xrefsto(self, ad):
         """
         Returns a list of all xrefs to ad.
@@ -465,7 +460,6 @@ class Api():
         if ad in self.__db.xrefs:
             lst = set(self.__db.xrefs[ad])
         return lst
-
 
     def add_symbol(self, ad, name, force=False):
         """
@@ -500,7 +494,6 @@ class Api():
 
         return True
 
-
     def rm_symbol(self, ad):
         """
         Remove the symbol matched by the address ad.
@@ -512,8 +505,9 @@ class Api():
         if name in self.__db.symbols:
             del self.__db.symbols[name]
 
-
-    def create_jmptable(self, inst_addr, table_addr, nb_entries, entry_size, dont_analyze=False):
+    def create_jmptable(
+        self, inst_addr, table_addr, nb_entries, entry_size, dont_analyze=False
+    ):
         """
         Create a jump table.
         inst_addr: address of the jump
@@ -541,8 +535,10 @@ class Api():
         name = "jmptable_%x" % table_addr
         self.add_symbol(table_addr, name, force=True)
         self.__db.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
-        self.__db.internal_inline_comments[inst_addr] = \
-            "switch statement %s[%d]" % (name, nb_entries)
+        self.__db.internal_inline_comments[inst_addr] = "switch statement %s[%d]" % (
+            name,
+            nb_entries,
+        )
 
         all_cases = {}
         for ad in table:
@@ -554,11 +550,9 @@ class Api():
             case += 1
 
         for ad in all_cases:
-            self.__db.internal_previous_comments[ad] = \
-                ["case %s  %s" % (
-                    ", ".join(map(str, all_cases[ad])),
-                    name
-                )]
+            self.__db.internal_previous_comments[ad] = [
+                "case %s  %s" % (", ".join(map(str, all_cases[ad])), name)
+            ]
 
         if dont_analyze:
             return True
@@ -575,7 +569,6 @@ class Api():
 
         return True
 
-
     def add_xref(self, from_ad, to_ad):
         if to_ad in self.__db.xrefs:
             if from_ad not in self.__db.xrefs[to_ad]:
@@ -590,11 +583,9 @@ class Api():
                 end = head + self.mem.get_size(head)
                 self.mem.mm[to_ad] = [end - to_ad, MEM_HEAD, head]
 
-
     def add_xrefs_table(self, from_ad, to_ad_list):
         for x in to_ad_list:
             self.add_xref(from_ad, x)
-
 
     def rm_xref(self, from_ad, to_ad):
         if to_ad in self.__db.xrefs:
@@ -607,11 +598,9 @@ class Api():
         if head in self.__db.data_sub_xrefs:
             del self.__db.data_sub_xrefs[head][to_ad]
 
-
     def rm_xrefs_table(self, from_ad, to_ad_list):
         for x in to_ad_list:
             self.rm_xref(from_ad, x)
-
 
     def rm_xrefs_range(self, start, size):
         end = start + size
@@ -620,13 +609,11 @@ class Api():
                 del self.xrefs[start]
             start += 1
 
-
     def is_reserved_prefix(self, name):
         for n in RESERVED_PREFIX:
             if name.startswith(n):
                 return True
         return False
-
 
     def get_addr_from_symbol(self, name):
         """
@@ -638,7 +625,6 @@ class Api():
         if ctx is None:
             return -1
         return ctx.entry
-
 
     def get_symbol(self, ad):
         """
@@ -681,13 +667,11 @@ class Api():
 
         return None
 
-
     def disasm(self, ad):
         """
         Returns a capstone instruction object.
         """
         return self.__dis.lazy_disasm(ad)
-
 
     def dump_asm(self, ad, nb_lines=10, until=-1):
         """
@@ -697,7 +681,6 @@ class Api():
         ctx = self.__gctx.get_addr_context(ad)
         return ctx.dump_asm(lines=nb_lines, until=until)
 
-
     def decompile(self, ad):
         """
         Returns an Output object. You can then call the function print.
@@ -705,7 +688,6 @@ class Api():
         """
         ctx = self.__gctx.get_addr_context(ad)
         return ctx.decompile()
-
 
     def get_func_addr(self, ad):
         """
@@ -716,7 +698,6 @@ class Api():
         if func_id == -1:
             return None
         return self.__db.func_id[func_id]
-
 
     def set_frame_size(self, func_ad, frame_size):
         """
@@ -730,7 +711,6 @@ class Api():
         self.__queue_wait.get()
         return True
 
-
     def set_noreturn(self, func_ad, val):
         """
         val is a boolean. It sets the function as noreturn or not
@@ -742,7 +722,6 @@ class Api():
             self.__db.functions[func_ad][FUNC_FLAGS] |= FUNC_FLAG_NORETURN
         else:
             self.__db.functions[func_ad][FUNC_FLAGS] &= ~FUNC_FLAG_NORETURN
-
 
     def var_rename(self, func_ad, off, name):
         """
@@ -774,11 +753,9 @@ class Api():
 
         func_obj[FUNC_VARS][off][VAR_NAME] = n
 
-
     def iter_symbols(self):
         for ad, name in self.__db.reverse_symbols.items():
             yield (ad, name)
-
 
     def invert_cond(self, ad):
         i = self.__dis.lazy_disasm(ad)

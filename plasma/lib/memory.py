@@ -55,7 +55,7 @@ from plasma.lib.consts import *
 #
 
 
-class Memory():
+class Memory:
     def __init__(self):
         #
         # Each item contains a list :
@@ -86,13 +86,12 @@ class Memory():
         self.xrefs = None
         self.data_sub_xrefs = None
 
-
     def __len__(self):
         return len(self.mm)
 
-
     # If you are not sure about what you do, don't use this function.
     # Maybe you should see in lib.api.
+
     def add(self, ad, size, ty, val=None):
         self.rm_range(ad, max(self.get_size(ad), size))
 
@@ -127,7 +126,6 @@ class Memory():
 
             self.mm[end - 1] = [1, MEM_HEAD, ad]
 
-
     def __rm_block_heads(self, ad, sz):
         end = ad + sz
         while ad < end:
@@ -138,7 +136,6 @@ class Memory():
                 else:
                     del self.mm[ad]
             ad += 1
-
 
     def rm_range(self, ad, sz):
         end = ad + sz
@@ -168,10 +165,8 @@ class Memory():
                     del self.mm[ad]
             ad += 1
 
-
     def type(self, ad, ty):
         self.mm[ad][1] = ty
-
 
     def is_code(self, ad):
         if ad in self.mm:
@@ -179,25 +174,21 @@ class Memory():
             return ty == MEM_CODE or ty == MEM_FUNC
         return False
 
-
     def is_func(self, ad):
         if ad in self.mm:
             return self.mm[ad][1] == MEM_FUNC
         return False
-
 
     def is_loc(self, ad):
         if ad in self.mm:
             return self.mm[ad][1] == MEM_CODE
         return False
 
-
     def is_offset(self, ad):
         if ad in self.mm:
             ty = self.mm[ad][1]
-            return  MEM_WOFFSET <= ty <= MEM_QOFFSET
+            return MEM_WOFFSET <= ty <= MEM_QOFFSET
         return False
-
 
     def is_data(self, ad):
         if ad in self.mm:
@@ -205,55 +196,46 @@ class Memory():
             return ty >= MEM_BYTE
         return False
 
-
     def is_unk(self, ad):
         if ad in self.mm:
             return self.mm[ad][1] == MEM_UNK
         return True
-
 
     def is_array(self, ad):
         if ad in self.mm:
             return self.mm[ad][1] == MEM_ARRAY
         return False
 
-
     def get_func_id(self, ad):
         if not self.is_code(ad):
             return -1
         return self.mm[ad][2]
 
-
     # warning: if you need to check if it's MEM_UNK use is_unk instead
+
     def get_type(self, ad):
         if ad in self.mm:
             return self.mm[ad][1]
         return -1
 
-
     def exists(self, ad):
         return ad in self.mm
 
-
     def get_size_from_type(self, ty):
         return self.size_lookup.get(ty, 1)
-
 
     def get_size(self, ad):
         if ad in self.mm:
             return self.mm[ad][0]
         return 1
 
-
     def get_type_from_size(self, sz):
         return self.rev_size_lookup.get(sz, 1)
-
 
     def get_array_entry_type(self, ad):
         if self.is_array(ad):
             return self.mm[ad][2]
         return -1
-
 
     def get_head_addr(self, ad):
         # Now check if need to go backward (maybe we are inside an instruction
@@ -276,7 +258,6 @@ class Memory():
 
         # Nothing found: it's an unknown data or byte
         return ad
-
 
     def is_overlapping(self, ad):
         return ad != self.get_head_addr(ad)

@@ -23,7 +23,7 @@ class Ast_Branch:
         self.nodes = []
         self.parent = None
         self.level = 0
-        self.idx_in_parent = -1 # index in nodes list in the parent branch
+        self.idx_in_parent = -1  # index in nodes list in the parent branch
 
     def add(self, node):
         if isinstance(node, Ast_Branch):
@@ -35,7 +35,7 @@ class Ast_Branch:
         for n in self.nodes:
             if isinstance(n, list):
                 o._asm_block(n, tab)
-            else: # ast
+            else:  # ast
                 n.dump(o, tab)
 
 
@@ -99,21 +99,28 @@ class Ast_If_cond:
 
         # If it contains only one instruction
         # if self.fused_inst == None and len(self.br.nodes) == 1 and \
-                # len(self.br.nodes[0]) == 1 and isinstance(self.br.nodes[0], list):
-            # o._add(" :  ")
-            # o._asm_inst(self.br.nodes[0][0], 0)
+        # len(self.br.nodes[0]) == 1 and isinstance(self.br.nodes[0], list):
+        # o._add(" :  ")
+        # o._asm_inst(self.br.nodes[0][0], 0)
         # else:
         o._add(" {")
         o._new_line()
-        self.br.dump(o, tab+1)
+        self.br.dump(o, tab + 1)
         o._tabs(tab)
         o._add("}")
         o._new_line()
 
 
 class Ast_Ifelse:
-    def __init__(self, jump_inst, br_next_jump, br_next,
-                 expected_next_addr, prefetch=None, force_inv_if=False):
+    def __init__(
+        self,
+        jump_inst,
+        br_next_jump,
+        br_next,
+        expected_next_addr,
+        prefetch=None,
+        force_inv_if=False,
+    ):
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
@@ -151,7 +158,7 @@ class Ast_Ifelse:
         if len(self.br_next.nodes) == 0:
             br_next, br_next_jump = br_next_jump, br_next
             inv_if = True
-            
+
         o._comment_fused(self.jump_inst, self.fused_inst, tab)
 
         if self.prefetch is not None:
@@ -165,17 +172,15 @@ class Ast_Ifelse:
 
         # jump_inst is the condition to go to the else-part
         if inv_if ^ self.force_inv_if:
-            o._if_cond(ARCH_UTILS.get_cond(self.jump_inst),
-                            self.fused_inst)
+            o._if_cond(ARCH_UTILS.get_cond(self.jump_inst), self.fused_inst)
         else:
-            o._if_cond(ARCH_UTILS.invert_cond(self.jump_inst),
-                            self.fused_inst)
+            o._if_cond(ARCH_UTILS.invert_cond(self.jump_inst), self.fused_inst)
 
         o._add(" {")
         o._new_line()
 
         # if-part
-        br_next.dump(o, tab+1)
+        br_next.dump(o, tab + 1)
         o._tabs(tab)
         o._add("}")
 
@@ -207,9 +212,13 @@ class Ast_Ifelse:
                 br.nodes[0].dump(o, tab, print_else_keyword=True)
                 return
 
-            if len(br.nodes) == 2 and isinstance(br.nodes[0], list) and \
-                  len(br.nodes[0]) == 1 and ARCH_UTILS.is_cmp(br.nodes[0][0]) and \
-                  isinstance(br.nodes[1], Ast_Ifelse):
+            if (
+                len(br.nodes) == 2
+                and isinstance(br.nodes[0], list)
+                and len(br.nodes[0]) == 1
+                and ARCH_UTILS.is_cmp(br.nodes[0][0])
+                and isinstance(br.nodes[1], Ast_Ifelse)
+            ):
                 o._new_line()
                 br.nodes[1].dump(o, tab, print_else_keyword=True)
                 return
@@ -217,7 +226,7 @@ class Ast_Ifelse:
             o._keyword(" else")
             o._add(" {")
             o._new_line()
-            br.dump(o, tab+1)
+            br.dump(o, tab + 1)
 
             o._tabs(tab)
             o._add("}")
@@ -272,7 +281,7 @@ class Ast_Loop:
             o._keyword("loop")
             o._add(" {")
         o._new_line()
-        self.branch.dump(o, tab+1)
+        self.branch.dump(o, tab + 1)
         o._tabs(tab)
         o._add("} ")
 

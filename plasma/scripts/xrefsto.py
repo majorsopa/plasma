@@ -49,7 +49,7 @@ def rec_xref(output, first_ad, ad, depth):
 
         if (x, ad) not in links:
             links.add((x, ad))
-            output.write('node_%x -> node_%x;\n' % (x, ad))
+            output.write("node_%x -> node_%x;\n" % (x, ad))
             rec_xref(output, first_ad, x, depth)
 
 
@@ -62,8 +62,10 @@ else:
     filename = mkstemp(prefix="plasma")[1]
 
     output = open(filename, "w+")
-    output.write('digraph {\n')
-    output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
+    output.write("digraph {\n")
+    output.write(
+        'node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n'
+    )
 
     if api.mem.is_code(ad):
         f = api.get_func_addr(ad)
@@ -71,7 +73,7 @@ else:
             ad = f
 
     rec_xref(output, ad, ad, depth)
-    output.write('}')
+    output.write("}")
     output.close()
 
     Xdot(filename).start()

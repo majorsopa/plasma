@@ -22,12 +22,15 @@ import sys
 gctx = None
 
 
-if sys.maxsize == 0x7fffffffffffffff:
+if sys.maxsize == 0x7FFFFFFFFFFFFFFF:
+
     def unsigned(n):
-        return n & 0xffffffffffffffff
+        return n & 0xFFFFFFFFFFFFFFFF
+
 else:
+
     def unsigned(n):
-        return n & 0xffffffff
+        return n & 0xFFFFFFFF
 
 
 def print_no_end(text):
@@ -48,27 +51,27 @@ def debug__(obj="", end="\n"):
             print_tuple(obj)
 
 
-
 # In each array nxt (from gph.link_out)
-BRANCH_NEXT = 0        # or for the if part
-BRANCH_NEXT_JUMP = 1   # or for the else part
+BRANCH_NEXT = 0  # or for the if part
+BRANCH_NEXT_JUMP = 1  # or for the else part
 
 
 # Here, I don't use string.printable because it contains \r \n \t
 # and I want to print backslashed strings.
-PRINTABLE = [r'\x{0:02x}'.format(i) for i in range(256)]
+PRINTABLE = [r"\x{0:02x}".format(i) for i in range(256)]
 BYTES_PRINTABLE_SET = set()
-for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
-        "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ \r\t\n"):
+for c in (
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
+    "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ \r\t\n"
+):
     PRINTABLE[ord(c)] = c
     BYTES_PRINTABLE_SET.add(ord(c))
 
-PRINTABLE[0] = r'\0'
-PRINTABLE[9] = r'\t'
-PRINTABLE[13] = r'\r'
+PRINTABLE[0] = r"\0"
+PRINTABLE[9] = r"\t"
+PRINTABLE[13] = r"\r"
 
 get_char = PRINTABLE.__getitem__
-
 
 
 def index(L, obj, k=0):
@@ -87,7 +90,6 @@ def list_starts_with(l, prefix):
             return False
         i += 1
     return True
-
 
 
 def error(txt):
@@ -112,6 +114,7 @@ def die(txt=None):
 
 
 # Debug functions
+
 
 def print_set(s, end="\n"):
     print("{", end="", file=sys.stderr)
