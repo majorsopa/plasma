@@ -1245,7 +1245,7 @@ class Disasmbox(Listbox):
         if text == "":
             return True
 
-        ctx = self.gctx.get_addr_context(text)
+        ctx = self.gctx.get_addr_context(text.lower())
         if not ctx:
             self.status_bar_message("error: not an address or unknown symbol")
             return False
